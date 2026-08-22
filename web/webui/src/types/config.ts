@@ -60,17 +60,42 @@ export const trackerValidationSchema = z.object({
   torznab: z.array(z.string().url()),
 });
 
-export const clientValidationSchema = z.object({
-  client: z.string().min(1, ZodErrorMessages.emptyString),
-  url: z.string().url(),
-  user: z.string().nullish(),
-  password: z.string().nullish(),
-  readOnly: z
-    .boolean()
-    .optional()
-    .default(false)
-    .or(z.null().transform(() => false)),
-});
+export const clientValidationSchema = z
+  .object({
+    client: z.string().min(1, ZodErrorMessages.emptyString),
+    url: z.string().url(),
+    user: z.string().nullish(),
+    password: z.string().nullish(),
+    useApiKey: z
+      .boolean()
+      .optional()
+      .default(false)
+      .or(z.null().transform(() => false)),
+    apiKey: z.string().nullish(),
+    readOnly: z
+      .boolean()
+      .optional()
+      .default(false)
+      .or(z.null().transform(() => false)),
+  })
+  // The daemon recognises an API key by the `qbt_` prefix qBittorrent gives
+  // every key, combined with an empty password. Anything else is sent as a
+  // passwordless username and fails at /auth/login with a message about
+  // credentials, which would contradict what was just filled in here.
+  .superRefine((value, ctx) => {
+    // Switching an existing client from qBittorrent to another type leaves the
+    // toggle on; the URL builder ignores it there, so validation must too.
+    if (!value.useApiKey || value.client?.toLowerCase() !== "qbittorrent") {
+      return;
+    }
+    if (!value.apiKey?.startsWith("qbt_")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["apiKey"],
+        message: "qBittorrent API keys start with qbt_",
+      });
+    }
+  });
 
 export const downloaderValidationSchema = z.object({
   action: z.nativeEnum(Action),

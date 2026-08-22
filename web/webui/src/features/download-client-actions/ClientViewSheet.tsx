@@ -10,23 +10,13 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Pencil } from "lucide-react";
-
-// ! FIXME: consolidate this type in a types.ts file and import it
-// Same as the one in clients.tsx
-type DownloadClient = {
-  name?: string;
-  client: string;
-  url: string;
-  user?: string;
-  password: string;
-  readOnly?: boolean;
-};
+import { TDownloadClient } from "@/types/download-clients";
 
 interface ClientViewSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  client: DownloadClient | null;
-  onEdit?: (client: DownloadClient) => void;
+  client: TDownloadClient | null;
+  onEdit?: (client: TDownloadClient) => void;
 }
 
 export default function ClientViewSheet({
@@ -51,19 +41,30 @@ export default function ClientViewSheet({
             </div>
           </div>
 
-          <div className="grid gap-3">
-            <Label>Username</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
-              {client?.user || "N/A"}
+          {client?.useApiKey ? (
+            <div className="grid gap-3">
+              <Label>API Key</Label>
+              <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+                {client?.apiKey ? "********" : "N/A"}
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid gap-3">
+                <Label>Username</Label>
+                <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+                  {client?.user || "N/A"}
+                </div>
+              </div>
 
-          <div className="grid gap-3">
-            <Label>Password</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
-              {client?.password ? "********" : "N/A"}
-            </div>
-          </div>
+              <div className="grid gap-3">
+                <Label>Password</Label>
+                <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+                  {client?.password ? "********" : "N/A"}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="grid gap-3">
             <Label>Read only</Label>

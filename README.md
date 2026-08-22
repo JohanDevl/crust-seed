@@ -116,9 +116,10 @@ web UI unchanged. Three things are deliberately different:
   password. crust-seed also accepts the stateless API keys added in qBittorrent
   5.2 (Preferences → Web UI → API Key), written in place of the username with
   no password: `qbittorrent:http://qbt_yourkeyhere@localhost:8080`. In the Web
-  UI, put the key in the Username field and leave Password empty. Password
-  authentication is unchanged. This is the one place the vendored UI is
-  patched, so that Test Connection stays available without a password.
+  UI, the client form has a "Use an API key instead of a login" toggle that
+  swaps the User and Password fields for an API Key field. Password
+  authentication is unchanged. This is the only place the vendored UI is
+  patched.
 
 ## Credits
 

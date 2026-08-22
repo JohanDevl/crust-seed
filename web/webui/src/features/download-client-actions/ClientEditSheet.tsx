@@ -80,6 +80,8 @@ export default function ClientEditSheet({
             username: validatedData.user ?? "",
             password: validatedData.password ?? "",
             readonly: validatedData.readOnly,
+            useApiKey: validatedData.useApiKey,
+            apiKey: validatedData.apiKey ?? "",
           });
 
           let updatedClients: string[];
@@ -116,18 +118,24 @@ export default function ClientEditSheet({
     const password = String(
       (form.getFieldValue("password") as string | undefined) ?? "",
     );
+    const useApiKey = form.getFieldValue("useApiKey") === true;
+    const apiKey = String(
+      (form.getFieldValue("apiKey") as string | undefined) ?? "",
+    );
 
     const testUrl = buildClientTestUrl({
       client,
       endpointUrl: url,
       username,
       password,
+      useApiKey,
+      apiKey,
     });
     const result = await testConnection({
       client,
       url: testUrl,
-      username,
-      password,
+      username: useApiKey ? apiKey : username,
+      password: useApiKey ? "" : password,
     });
     if (result.success) {
       toast.success("Connection successful!", {
@@ -181,19 +189,72 @@ export default function ClientEditSheet({
                 </form.AppField>
               </div>
 
-              <div className="grid gap-3">
-                <form.AppField name="user">
-                  {(field) => <field.TextField label="User" />}
-                </form.AppField>
-              </div>
+              <form.Subscribe
+                selector={(state) => ({
+                  clientValue: (state.values as Partial<TDownloadClient>)
+                    .client,
+                  useApiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .useApiKey,
+                })}
+              >
+                {({ clientValue, useApiKeyValue }) => {
+                  // Only qBittorrent (5.2+) has API keys. For every other
+                  // client the toggle is hidden and the login fields stay.
+                  const supportsApiKey = clientValue === "qbittorrent";
+                  const usingApiKey = supportsApiKey && useApiKeyValue === true;
+                  return (
+                    <>
+                      {supportsApiKey && (
+                        <div className="grid gap-3">
+                          <form.AppField name="useApiKey">
+                            {(field) => (
+                              <field.SwitchField label="Use an API key instead of a login" />
+                            )}
+                          </form.AppField>
+                        </div>
+                      )}
 
-              <div className="grid gap-3">
-                <form.AppField name="password">
-                  {(field) => (
-                    <field.TextField label="Password" type="password" />
-                  )}
-                </form.AppField>
-              </div>
+                      {usingApiKey ? (
+                        <div className="grid gap-3">
+                          <form.AppField name="apiKey">
+                            {(field) => (
+                              <field.TextField
+                                label="API Key"
+                                type="password"
+                                autoComplete="off"
+                                placeholder="qbt_..."
+                              />
+                            )}
+                          </form.AppField>
+                          <p className="text-muted-foreground -mt-1 px-2 text-sm italic">
+                            qBittorrent 5.2 and later. Generate one under
+                            Options → Web UI → API Key.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid gap-3">
+                            <form.AppField name="user">
+                              {(field) => <field.TextField label="User" />}
+                            </form.AppField>
+                          </div>
+
+                          <div className="grid gap-3">
+                            <form.AppField name="password">
+                              {(field) => (
+                                <field.TextField
+                                  label="Password"
+                                  type="password"
+                                />
+                              )}
+                            </form.AppField>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                }}
+              </form.Subscribe>
 
               <div className="grid gap-3">
                 <form.AppField name="readOnly">
@@ -212,6 +273,11 @@ export default function ClientEditSheet({
                   passwordMeta: state.fieldMeta.password,
                   clientValue: (state.values as Partial<TDownloadClient>)
                     .client,
+                  useApiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .useApiKey,
+                  apiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .apiKey,
+                  apiKeyMeta: state.fieldMeta.apiKey,
                 })}
               >
                 {({
@@ -222,28 +288,27 @@ export default function ClientEditSheet({
                   passwordValue,
                   passwordMeta,
                   clientValue,
+                  useApiKeyValue,
+                  apiKeyValue,
+                  apiKeyMeta,
                 }) => {
                   // Determine if test button should be enabled
                   const urlValid = urlValue && !urlMeta?.errors?.length;
-                  // A qBittorrent API key (5.2+) goes in the username field and
-                  // has no password, so requiring one would leave Test
-                  // permanently disabled for a perfectly valid client.
-                  const usesApiKey =
-                    clientValue === "qbittorrent" &&
-                    typeof userValue === "string" &&
-                    userValue.startsWith("qbt_");
-                  const passwordValid =
-                    usesApiKey ||
-                    (clientValue === "transmission" &&
-                    passwordValue === undefined
-                      ? true
-                      : passwordValue && !passwordMeta?.errors?.length);
-                  const userValid =
-                    clientValue === "deluge" || clientValue === "transmission"
-                      ? true
-                      : userValue && !userMeta?.errors?.length;
+                  // Under an API key there is no password to require, so the
+                  // key itself is what has to be valid.
+                  const usingApiKey =
+                    clientValue === "qbittorrent" && useApiKeyValue === true;
+                  const credentialsValid = usingApiKey
+                    ? apiKeyValue && !apiKeyMeta?.errors?.length
+                    : (clientValue === "transmission" &&
+                      passwordValue === undefined
+                        ? true
+                        : passwordValue && !passwordMeta?.errors?.length) &&
+                      (clientValue === "deluge" || clientValue === "transmission"
+                        ? true
+                        : userValue && !userMeta?.errors?.length);
 
-                  const canTest = urlValid && passwordValid && userValid;
+                  const canTest = urlValid && credentialsValid;
                   return (
                     <>
                       <Button

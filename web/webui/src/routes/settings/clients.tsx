@@ -32,6 +32,7 @@ import ClientViewSheet from "@/features/download-client-actions/ClientViewSheet"
 import ClientEditSheet from "@/features/download-client-actions/ClientEditSheet";
 import {
   buildClientUrl,
+  clientUrlUsesApiKey,
   getPasswordFromClientUrl,
   getUsernameFromClientUrl,
   removeUserAndPassFromClientUrl,
@@ -122,6 +123,8 @@ function TorrentClientsSettings() {
         let readOnly = false;
         let user = "";
         let password = "";
+        let useApiKey = false;
+        let apiKey = "";
 
         if (typeof client === "object") {
           clientApp = client.client;
@@ -147,6 +150,15 @@ function TorrentClientsSettings() {
           url = sanitizedUrl;
           user = getUsernameFromClientUrl(fullUrl);
           password = getPasswordFromClientUrl(fullUrl);
+
+          // An API key is stored in the username position with no password.
+          // Without splitting it back out here, editing the client would show
+          // the key sitting in the User field with the toggle off.
+          if (clientApp === "qbittorrent" && clientUrlUsesApiKey(user, password)) {
+            useApiKey = true;
+            apiKey = user;
+            user = "";
+          }
         }
 
         if (!clientApp || !url) return null;
@@ -157,6 +169,8 @@ function TorrentClientsSettings() {
           url,
           user,
           password,
+          useApiKey,
+          apiKey,
           readOnly,
         };
       })
@@ -204,6 +218,9 @@ function TorrentClientsSettings() {
         : clients?.filter((c) => c.url !== client.url);
     setClients(updatedClients);
 
+    // Every remaining client is rebuilt from scratch here, so the API key has
+    // to be carried through or deleting one client would quietly strip the
+    // credentials off the others.
     const serializedClients = (updatedClients || []).map((entry) =>
       buildClientUrl({
         client: entry.client,
@@ -211,6 +228,8 @@ function TorrentClientsSettings() {
         username: entry.user ?? "",
         password: entry.password ?? "",
         readonly: entry.readOnly ?? false,
+        useApiKey: entry.useApiKey ?? false,
+        apiKey: entry.apiKey ?? "",
       }),
     );
 

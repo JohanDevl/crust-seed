@@ -77,18 +77,42 @@ export const removeUserAndPassFromClientUrl = (url: string) => {
   }
 };
 
+/** qBittorrent gives every API key this prefix; the daemon keys off it. */
+export const API_KEY_PREFIX = "qbt_";
+
+/**
+ * True when a stored client URL carries an API key rather than a login.
+ *
+ * A key occupies the username position with no password, so both halves have
+ * to be checked: a username that merely has no password is an ordinary account
+ * and must keep going through /auth/login.
+ */
+export const clientUrlUsesApiKey = (username: string, password: string) =>
+  password === "" && username.startsWith(API_KEY_PREFIX);
+
 function buildEndpointUrlWithAuth({
   endpointUrl,
   username = "",
   password = "",
   includeUsername = true,
+  useApiKey = false,
+  apiKey = "",
 }: {
   endpointUrl: string;
   username?: string;
   password?: string;
   includeUsername?: boolean;
+  useApiKey?: boolean;
+  apiKey?: string;
 }) {
   const url = parseClientUrl(removeUserAndPassFromClientUrl(endpointUrl));
+  // An API key replaces both halves of the userinfo, so whatever is left in
+  // the login fields is ignored rather than having to be cleared by hand.
+  if (useApiKey) {
+    url.username = apiKey;
+    url.password = "";
+    return url.toString();
+  }
   url.username = includeUsername ? username : "";
   url.password = password;
   return url.toString();
@@ -100,18 +124,24 @@ export function buildClientUrl({
   username = "",
   password = "",
   readonly = false,
+  useApiKey = false,
+  apiKey = "",
 }: {
   client: string;
   endpointUrl: string;
   username?: string;
   password?: string;
   readonly?: boolean;
+  useApiKey?: boolean;
+  apiKey?: string;
 }) {
   const url = buildEndpointUrlWithAuth({
     endpointUrl,
     username,
     password,
     includeUsername: client.toLowerCase() !== "deluge",
+    useApiKey: useApiKey && client.toLowerCase() === "qbittorrent",
+    apiKey,
   });
   return `${client.toLowerCase()}:${readonly ? "readonly:" : ""}${url}`;
 }
@@ -121,16 +151,22 @@ export function buildClientTestUrl({
   endpointUrl,
   username = "",
   password = "",
+  useApiKey = false,
+  apiKey = "",
 }: {
   client: string;
   endpointUrl: string;
   username?: string;
   password?: string;
+  useApiKey?: boolean;
+  apiKey?: string;
 }) {
   return buildEndpointUrlWithAuth({
     endpointUrl,
     username,
     password,
     includeUsername: client.toLowerCase() !== "deluge",
+    useApiKey: useApiKey && client.toLowerCase() === "qbittorrent",
+    apiKey,
   });
 }
