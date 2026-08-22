@@ -225,11 +225,19 @@ export default function ClientEditSheet({
                 }) => {
                   // Determine if test button should be enabled
                   const urlValid = urlValue && !urlMeta?.errors?.length;
+                  // A qBittorrent API key (5.2+) goes in the username field and
+                  // has no password, so requiring one would leave Test
+                  // permanently disabled for a perfectly valid client.
+                  const usesApiKey =
+                    clientValue === "qbittorrent" &&
+                    typeof userValue === "string" &&
+                    userValue.startsWith("qbt_");
                   const passwordValid =
-                    clientValue === "transmission" &&
+                    usesApiKey ||
+                    (clientValue === "transmission" &&
                     passwordValue === undefined
                       ? true
-                      : passwordValue && !passwordMeta?.errors?.length;
+                      : passwordValue && !passwordMeta?.errors?.length);
                   const userValid =
                     clientValue === "deluge" || clientValue === "transmission"
                       ? true

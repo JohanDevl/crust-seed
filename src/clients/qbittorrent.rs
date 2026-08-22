@@ -227,6 +227,15 @@ impl QBittorrent {
             })?;
 
         let parts: Vec<&str> = version.trim().split('.').collect();
+        // Under an API key `request` never re-authenticates on 403, so a
+        // rejected key arrives here as the body of that response rather than a
+        // version string — reporting it as an ancient qBittorrent would send
+        // the user looking in the wrong place.
+        if self.api_key.is_some() && extract_int(parts.first().copied().unwrap_or("")).is_none() {
+            return Err(CrustSeedError::new(
+                "qBittorrent rejected the API key".to_string(),
+            ));
+        }
         let parsed = Version {
             major: extract_int(parts.first().copied().unwrap_or("")).unwrap_or(0),
             minor: extract_int(parts.get(1).copied().unwrap_or("")).unwrap_or(0),
