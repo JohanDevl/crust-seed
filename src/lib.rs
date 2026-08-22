@@ -9,6 +9,7 @@ pub mod arr;
 pub mod clients;
 pub mod config;
 pub mod constants;
+pub mod data_files;
 pub mod db;
 pub mod decide;
 pub mod errors;
