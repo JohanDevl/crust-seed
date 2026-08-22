@@ -32,8 +32,6 @@ web/webui/src/routeTree.gen.ts
 # The runtime logs live under /config/ or /data/, already ignored above.
 /logs/
 /torrent_cache/
-config.toml
-!config.example.toml
 
 # Working directories used while testing against real torrents
 input/
