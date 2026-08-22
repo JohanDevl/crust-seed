@@ -16,6 +16,7 @@ pub mod errors;
 pub mod http;
 pub mod indexers;
 pub mod inject;
+pub mod jobs;
 pub mod logger;
 pub mod pipeline;
 pub mod prefilter;
