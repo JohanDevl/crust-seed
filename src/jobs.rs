@@ -561,6 +561,8 @@ mod tests {
     /// them all would throw away the entire search history.
     #[tokio::test]
     async fn a_missing_cache_directory_does_not_wipe_the_decision_table() {
+        // CONFIG_DIR is process-global; serialise the tests that set it.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let dir = tempfile::tempdir().unwrap();
         unsafe { std::env::set_var("CONFIG_DIR", dir.path()) };
 

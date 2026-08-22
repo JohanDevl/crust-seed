@@ -764,6 +764,8 @@ mod tests {
 
     #[tokio::test]
     async fn restoring_copies_the_cache_into_the_output_dir() {
+        // CONFIG_DIR is process-global; serialise the tests that set it.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let pool = crate::db::test_pool().await;
         let cache = tempfile::tempdir().unwrap();
         let output = tempfile::tempdir().unwrap();

@@ -7,6 +7,7 @@
 pub mod action;
 pub mod arr;
 pub mod build_info;
+pub mod cli;
 pub mod clients;
 pub mod config;
 pub mod constants;
@@ -27,6 +28,7 @@ pub mod problems;
 pub mod push_notifier;
 pub mod searchee;
 pub mod server;
+pub mod startup;
 pub mod torrent;
 pub mod torznab;
 pub mod user_auth;

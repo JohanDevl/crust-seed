@@ -172,6 +172,81 @@ pub async fn write_cached_torrent(meta: &Metafile) -> std::io::Result<()> {
     .await
 }
 
+/// Rewrites announce URLs across the whole torrent cache.
+///
+/// Used when a tracker changes domain or a passkey is rotated: without this the
+/// cached torrents would keep the dead announce and every restored cross-seed
+/// would fail to announce.
+///
+/// Only the announce fields are touched — the info dictionary is left byte-for-byte
+/// alone, so info hashes do not change.
+pub async fn update_torrent_cache_trackers(old_str: &str, new_str: &str) -> usize {
+    use crate::torrent::bencode::{self, Value};
+
+    let dir = torrent_cache_dir();
+    let Ok(paths) = find_all_torrent_files_in_dir(&dir).await else {
+        return 0;
+    };
+
+    let rewrite_url = |value: &Value| -> Option<Value> {
+        let text = value.as_str()?;
+        let replaced = text.replace(old_str, new_str);
+        (replaced != text).then(|| Value::Bytes(replaced.into_bytes()))
+    };
+
+    let mut updated = 0usize;
+    for path in paths {
+        let Ok(bytes) = tokio::fs::read(&path).await else {
+            continue;
+        };
+        let Ok(Value::Dict(mut root)) = bencode::decode(&bytes) else {
+            continue;
+        };
+
+        let mut changed = false;
+        if let Some(announce) = root.get(b"announce".as_slice())
+            && let Some(new_value) = rewrite_url(announce)
+        {
+            root.insert(b"announce".to_vec(), new_value);
+            changed = true;
+        }
+        if let Some(Value::List(tiers)) = root.get(b"announce-list".as_slice()) {
+            let mut new_tiers = Vec::with_capacity(tiers.len());
+            for tier in tiers {
+                let Value::List(urls) = tier else {
+                    new_tiers.push(tier.clone());
+                    continue;
+                };
+                let new_urls: Vec<Value> = urls
+                    .iter()
+                    .map(|url| match rewrite_url(url) {
+                        Some(new_value) => {
+                            changed = true;
+                            new_value
+                        }
+                        None => url.clone(),
+                    })
+                    .collect();
+                new_tiers.push(Value::List(new_urls));
+            }
+            if changed {
+                root.insert(b"announce-list".to_vec(), Value::List(new_tiers));
+            }
+        }
+
+        if !changed {
+            continue;
+        }
+        if tokio::fs::write(&path, bencode::encode(&Value::Dict(root)))
+            .await
+            .is_ok()
+        {
+            updated += 1;
+        }
+    }
+    updated
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -247,6 +322,37 @@ mod tests {
             "[nonsense][T]Name[0123456789abcdef0123456789abcdef01234567].torrent",
         );
         assert_eq!(parsed, FilenameMetadata::default());
+    }
+
+    /// Rewriting announce URLs must not disturb the info dict, or every
+    /// cached torrent would change info hash and stop matching.
+    #[tokio::test]
+    async fn tracker_rewriting_preserves_the_info_hash() {
+        // CONFIG_DIR is process-global; serialise the tests that set it.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
+        let dir = tempfile::tempdir().unwrap();
+        unsafe { std::env::set_var("CONFIG_DIR", dir.path()) };
+        let cache = dir.path().join("torrent_cache");
+        tokio::fs::create_dir_all(&cache).await.unwrap();
+
+        let original = meta("Movie.mkv");
+        tokio::fs::write(
+            cache.join(cached_torrent_name(&original.info_hash)),
+            original.encode(),
+        )
+        .await
+        .unwrap();
+
+        let updated = update_torrent_cache_trackers("tracker.example", "new.example").await;
+        assert_eq!(updated, 1);
+
+        let bytes = tokio::fs::read(cache.join(cached_torrent_name(&original.info_hash)))
+            .await
+            .unwrap();
+        let rewritten = Metafile::decode(&bytes).unwrap();
+        assert_eq!(rewritten.trackers, vec!["new.example"]);
+        assert_eq!(rewritten.info_hash, original.info_hash);
+        unsafe { std::env::remove_var("CONFIG_DIR") };
     }
 
     #[test]

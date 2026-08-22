@@ -116,6 +116,8 @@ mod tests {
 
     #[tokio::test]
     async fn diagnostics_report_a_missing_database_file_without_erroring() {
+        // CONFIG_DIR is process-global; serialise the tests that set it.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let dir = tempfile::tempdir().unwrap();
         unsafe { std::env::set_var("CONFIG_DIR", dir.path()) };
         let pool = test_pool().await;
