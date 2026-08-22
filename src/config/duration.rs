@@ -1,9 +1,10 @@
 //! Parser for Vercel's [`ms`](https://github.com/vercel/ms) duration strings.
 //!
-//! The config file expresses every timeout and cadence in this format
-//! (`"30 seconds"`, `"2 weeks"`, `"1d"`), and the original ran the `ms` npm
-//! package over them. Values are milliseconds, matching the storage format used
-//! throughout the app.
+//! cross-seed's config expressed every timeout and cadence in this format
+//! (`"30 seconds"`, `"2 weeks"`, `"1d"`) and ran the `ms` npm package over
+//! them. crust-seed keeps the vocabulary for its own defaults and for the
+//! durations it prints back in logs. Values are milliseconds, matching the
+//! storage format used throughout the app.
 
 const SECOND: f64 = 1000.0;
 const MINUTE: f64 = SECOND * 60.0;

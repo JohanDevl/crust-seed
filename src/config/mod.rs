@@ -5,21 +5,21 @@
 //!
 //! ## Layering
 //!
-//! Effective config = **defaults** ← **config file** ← **database overrides**
-//! ← **CLI flags**. That is the original's order, with the database (edited
-//! through the web UI) winning over the file.
+//! Effective config = **defaults** ← **database overrides** ← **CLI flags**.
+//! The database is the single source of truth and is edited through the web
+//! UI; CLI flags override it for one invocation without being persisted.
 //!
-//! ## The one deliberate divergence: the config file format
+//! ## The one deliberate divergence: there is no config file
 //!
 //! cross-seed's `config.js` is *executable JavaScript* that the daemon
-//! `import()`s. A Rust binary cannot evaluate it. crust-seed reads a
-//! declarative `config.toml` (or `config.json`) from the same directory with
-//! the same option names and the same `ms`-style duration strings, so
-//! translating an existing config is mechanical. See `config.example.toml`.
+//! `import()`s, and a Rust binary cannot evaluate it. Rather than invent a
+//! second declarative file format that would immediately disagree with the
+//! settings the web UI writes, crust-seed keeps every option in the database
+//! and lets the web UI (and `settings.save` over tRPC) be the only way to
+//! change it.
 
 pub mod db_config;
 pub mod duration;
-pub mod file;
 pub mod runtime;
 
 use std::path::{Path, PathBuf};

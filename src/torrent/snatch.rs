@@ -347,29 +347,42 @@ mod tests {
         clear_failure(key);
     }
 
+    /// SNATCH_HISTORY is a process-global that every test in this module shares
+    /// while they run in parallel, so this test owns two uniquely-named keys and
+    /// touches nothing else: clearing the whole map here used to wipe the
+    /// counters `failure_history_accumulates_per_key_and_clears` was mid-way
+    /// through asserting on.
     #[test]
     fn pruning_drops_only_stale_entries() {
+        let stale = "test-prune-stale";
+        let fresh = "test-prune-fresh";
         {
             let mut history = SNATCH_HISTORY.lock().unwrap();
-            history.clear();
             history.insert(
-                "stale".into(),
+                stale.into(),
                 FailureRecord {
                     initial_failure_at: now_ms() - 100_000,
                     num_failures: 3,
                 },
             );
             history.insert(
-                "fresh".into(),
+                fresh.into(),
                 FailureRecord {
                     initial_failure_at: now_ms(),
                     num_failures: 1,
                 },
             );
         }
+
+        // Entries another test just recorded are fresh, so pruning cannot drop
+        // them and the assertions below hold whatever else is in the map.
         let pruned = prune_snatch_history(50_000);
-        assert_eq!(pruned, vec!["stale".to_string()]);
-        assert!(SNATCH_HISTORY.lock().unwrap().contains_key("fresh"));
-        SNATCH_HISTORY.lock().unwrap().clear();
+        assert!(pruned.contains(&stale.to_string()));
+        assert!(!pruned.contains(&fresh.to_string()));
+
+        let mut history = SNATCH_HISTORY.lock().unwrap();
+        assert!(history.contains_key(fresh));
+        assert!(!history.contains_key(stale));
+        history.remove(fresh);
     }
 }

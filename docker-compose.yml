@@ -1,0 +1,35 @@
+# crust-seed — example Compose file.
+#
+# Copy it next to your other stacks, replace the three /path/to/... placeholders,
+# then:
+#   mkdir -p ./config && sudo chown -R 65532:65532 ./config
+#   docker compose up -d
+#
+# Open http://localhost:2468 and create the first user. Everything else —
+# indexers, torrent clients, link directories — is configured in the Web UI;
+# there is no config file to write.
+#
+# No healthcheck is defined: the image is distroless, so it ships neither a
+# shell nor curl to call GET /api/ping with. Poll it from the host if you want
+# one.
+
+services:
+  crust-seed:
+    image: ghcr.io/johandevl/crust-seed:latest
+    container_name: crust-seed
+    restart: unless-stopped
+    ports:
+      - "2468:2468"
+    volumes:
+      # Database, logs and the torrent cache. The container runs as UID/GID
+      # 65532:65532, so this directory must be owned by 65532:65532 on the host.
+      - ./config:/config
+      # Your client's .torrent files — qBittorrent's BT_backup, for example.
+      # Read-only is enough: crust-seed only ever reads them.
+      - /path/to/torrents:/torrents:ro
+      # The downloaded data itself; dataDirs points inside this.
+      - /path/to/data:/data
+      # Where crust-seed links matched data for the client to seed from.
+      # Hardlinks and reflinks only work within one filesystem, so /data and
+      # /links must live on the same volume unless you use symlinks.
+      - /path/to/links:/links
