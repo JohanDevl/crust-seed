@@ -10,11 +10,16 @@
  * levels do the structural work — canvas (sidebar), page (inset) and card —
  * so panels read as stacked paper instead of boxes drawn with borders.
  *
+ * The light-scheme status colours are deliberately deeper than their dark
+ * counterparts: a vivid amber reaches only 2.2:1 as text on a white card, so
+ * warning, success and info are pinned to the darkest shade that still reads
+ * as itself and clears 4.5:1.
+ *
  * Status colours are tokens rather than raw Tailwind palette classes. The
  * primary is an orange, which sits uncomfortably close to a red "error" if
  * both are picked by eye, so error / warning / success / info are pinned to
- * hues that stay apart in both schemes: 22 / 82 / 155 / 250 against a primary
- * at 42.
+ * hues that stay apart in both schemes: roughly 22 / 80 / 158 / 250 against a
+ * primary at 42.
  */
 
 @theme inline {
@@ -116,11 +121,11 @@
 
     --destructive: oklch(0.55 0.215 22);
     --destructive-foreground: oklch(1 0 0);
-    --success: oklch(0.6 0.13 155);
+    --success: oklch(0.53 0.14 158);
     --success-foreground: oklch(1 0 0);
-    --warning: oklch(0.76 0.15 82);
-    --warning-foreground: oklch(0.26 0.05 70);
-    --info: oklch(0.58 0.14 250);
+    --warning: oklch(0.56 0.14 80);
+    --warning-foreground: oklch(1 0 0);
+    --info: oklch(0.55 0.15 250);
     --info-foreground: oklch(1 0 0);
 
     --border: oklch(0.905 0.01 70);
@@ -129,8 +134,8 @@
 
     --chart-1: oklch(0.585 0.176 42);
     --chart-2: oklch(0.72 0.14 60);
-    --chart-3: oklch(0.6 0.13 155);
-    --chart-4: oklch(0.58 0.14 250);
+    --chart-3: oklch(0.53 0.14 158);
+    --chart-4: oklch(0.55 0.15 250);
     --chart-5: oklch(0.55 0.19 340);
 
     --sidebar: oklch(0.945 0.012 74);
