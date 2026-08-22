@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import {
   LogOut,
+  Github,
   Home,
   Settings,
   Search,
@@ -35,7 +36,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
+
+const REPOSITORY_URL = "https://github.com/JohanDevl/crust-seed";
 import { useTRPC } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 
@@ -280,13 +284,36 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="gap-1 p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Source code"
+              className="text-muted-foreground hover:text-foreground h-8 rounded-lg px-2.5 text-xs"
+            >
+              <a
+                href={REPOSITORY_URL}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <Github />
+                <span>Source code</span>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
         {authStatus?.isLoggedIn && (
-          <div className="bg-sidebar-accent/40 ring-sidebar-border/70 flex items-center gap-2.5 rounded-xl p-2 ring-1">
+          <SidebarSeparator className="mx-0 group-data-[collapsible=icon]:hidden" />
+        )}
+
+        {authStatus?.isLoggedIn && (
+          <div className="bg-sidebar-accent/40 ring-sidebar-border/70 flex items-center gap-2.5 rounded-xl p-2 ring-1 group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:ring-0">
             <span className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
               {authStatus.user?.username?.charAt(0) ?? "?"}
             </span>
-            <div className="min-w-0 flex-1 truncate text-sm font-medium">
+            <div className="min-w-0 flex-1 truncate text-sm font-medium group-data-[collapsible=icon]:hidden">
               {authStatus.user?.username}
             </div>
             <Button
