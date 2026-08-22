@@ -27,8 +27,11 @@ web/webui/src/routeTree.gen.ts
 *.db-wal
 *.sqlite
 *.sqlite3
-logs/
-torrent_cache/
+# Anchored: an unanchored `logs/` also matches web/webui/src/features/Logs/
+# on case-insensitive filesystems, silently dropping source from commits.
+# The runtime logs live under /config/ or /data/, already ignored above.
+/logs/
+/torrent_cache/
 config.toml
 !config.example.toml
 
