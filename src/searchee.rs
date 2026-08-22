@@ -181,6 +181,29 @@ pub fn media_type_of(title: &str, files: &[File]) -> MediaType {
     MediaType::Other
 }
 
+/// How far a candidate's *total* size may drift from the searchee's.
+///
+/// A virtual (ensemble) searchee is an approximation assembled from episodes,
+/// so it is judged by `seasonFromEpisodes` — the fraction of the season that
+/// must be present — rather than by `fuzzySizeThreshold`.
+pub fn get_fuzzy_size_factor(searchee: &Searchee) -> f64 {
+    let config = crate::config::runtime::get_runtime_config();
+    match config.season_from_episodes {
+        Some(season_from_episodes) if searchee.is_virtual() => 1.0 - season_from_episodes,
+        _ => config.fuzzy_size_threshold,
+    }
+}
+
+/// The complement of [`get_fuzzy_size_factor`]: the minimum fraction of a
+/// candidate that must be satisfied for a partial match.
+pub fn get_min_size_ratio(searchee: &Searchee) -> f64 {
+    let config = crate::config::runtime::get_runtime_config();
+    match config.season_from_episodes {
+        Some(season_from_episodes) if searchee.is_virtual() => season_from_episodes,
+        _ => 1.0 - config.fuzzy_size_threshold,
+    }
+}
+
 pub fn has_ext(files: &[File], exts: &[&str]) -> bool {
     files
         .iter()

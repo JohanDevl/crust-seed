@@ -12,6 +12,7 @@ pub mod errors;
 pub mod http;
 pub mod indexers;
 pub mod logger;
+pub mod prefilter;
 pub mod problems;
 pub mod searchee;
 pub mod torrent;
