@@ -1,0 +1,5 @@
+# main requires a review from a code owner, which makes an approval from
+# anyone else insufficient rather than merely unrequested. GitHub reads this
+# file from the base branch of a pull request, so it only has any effect once
+# it is on main.
+* @JohanDevl
