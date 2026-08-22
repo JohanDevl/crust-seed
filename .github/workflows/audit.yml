@@ -1,0 +1,35 @@
+name: Dependency audit
+
+# RUSTSEC advisory scan over Cargo.lock. Runs:
+#   - on any change to the dependency graph (push / PR),
+#   - weekly, so an advisory published against an UNCHANGED lockfile still
+#     surfaces within days instead of at the next dependency bump.
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'deny.toml'
+      - '.github/workflows/audit.yml'
+  pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'deny.toml'
+      - '.github/workflows/audit.yml'
+  schedule:
+    - cron: '17 6 * * 1' # Mondays 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: cargo-deny (advisories + bans)
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check advisories bans

@@ -1,0 +1,7 @@
+[toolchain]
+# Pinned to stable. The effective floor is the `rust-version` declared in
+# Cargo.toml — edition 2024 plus the MSRV of the transitive dependency graph.
+# channel = "stable" keeps us on the latest stable without re-pinning on every
+# minor bump.
+channel = "stable"
+components = ["rustfmt", "clippy"]

@@ -1,0 +1,169 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Page } from "@/components/Page";
+
+function DebugSettings() {
+  const [jsonValue, setJsonValue] = useState("");
+  const [isValid, setIsValid] = useState(true);
+  const [parseError, setParseError] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  const { data: settingsData, isLoading } = useQuery(
+    trpc.settings.get.queryOptions(),
+  );
+
+  const saveMutation = useMutation(
+    trpc.settings.replace.mutationOptions({
+      onSuccess: () => {
+        toast.success("Settings saved successfully!", {
+          description: "Your changes will take effect on the next restart.",
+        });
+        void queryClient.invalidateQueries({ queryKey: ["settings.get"] });
+      },
+      onError: (error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : "An unknown error occurred";
+        toast.error("Failed to save settings", {
+          description: message,
+        });
+      },
+    }),
+  );
+
+  const autoResizeTextarea = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      // Preserve the document scroll position
+      const scrollTop =
+        window.pageYOffset || document.documentElement.scrollTop;
+
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+
+      // Restore the scroll position after layout recalculation
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollTop);
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (settingsData?.config) {
+      setJsonValue(JSON.stringify(settingsData.config, null, 2));
+    }
+  }, [settingsData]);
+
+  useEffect(() => {
+    autoResizeTextarea();
+  }, [jsonValue]);
+
+  const validateJson = (value: string) => {
+    try {
+      JSON.parse(value);
+      setIsValid(true);
+      setParseError("");
+      return true;
+    } catch (error) {
+      setIsValid(false);
+      setParseError(error instanceof Error ? error.message : "Invalid JSON");
+      return false;
+    }
+  };
+
+  const handleJsonChange = (value: string) => {
+    setJsonValue(value);
+    validateJson(value);
+    setTimeout(autoResizeTextarea, 0); // Defer to next tick
+  };
+
+  const handleSave = () => {
+    if (!isValid) {
+      toast.error("Cannot save invalid JSON");
+      return;
+    }
+
+    try {
+      const parsedConfig = JSON.parse(jsonValue) as Record<string, unknown>;
+      saveMutation.mutate(parsedConfig);
+    } catch {
+      toast.error("Failed to parse JSON");
+    }
+  };
+
+  const handleReset = () => {
+    if (settingsData?.config) {
+      setJsonValue(JSON.stringify(settingsData.config, null, 2));
+      setIsValid(true);
+      setParseError("");
+      setTimeout(autoResizeTextarea, 0);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Page breadcrumbs={["Diagnostics", "Debug"]}>
+        <div className="flex items-center justify-center p-8">
+          <div>Loading settings...</div>
+        </div>
+      </Page>
+    );
+  }
+
+  const actions = (
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        onClick={handleReset}
+        disabled={saveMutation.isPending}
+      >
+        Reset
+      </Button>
+      <Button
+        onClick={handleSave}
+        disabled={!isValid || saveMutation.isPending}
+      >
+        {saveMutation.isPending ? "Saving..." : "Save"}
+      </Button>
+    </div>
+  );
+
+  return (
+    <Page breadcrumbs={["Diagnostics", "Debug"]} actions={actions}>
+      <div className="space-y-4">
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Raw JSON editor for debugging configuration issues.
+        </p>
+
+        <div className="relative">
+          <textarea
+            ref={textareaRef}
+            value={jsonValue}
+            onChange={(e) => handleJsonChange(e.target.value)}
+            className={`min-h-96 w-full resize-none overflow-hidden rounded-xl border p-4 font-mono text-sm shadow-sm ${
+              isValid ? "border-input" : "border-destructive"
+            } bg-background text-foreground`}
+            spellCheck={false}
+            placeholder="Loading settings..."
+          />
+        </div>
+
+        {!isValid && (
+          <div className="bg-destructive/10 text-destructive border-destructive/20 rounded-lg border p-3 text-sm">
+            <strong>JSON Error:</strong> {parseError}
+          </div>
+        )}
+      </div>
+    </Page>
+  );
+}
+
+export const Route = createFileRoute("/settings/debug")({
+  component: DebugSettings,
+});

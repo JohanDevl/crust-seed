@@ -1,15 +1,91 @@
-# Rust
+# ─── Rust ───────────────────────────────────────────────────────────────────
 /target/
 **/*.rs.bk
 *.pdb
 
-# Environment
+# NOTE: Cargo.lock is intentionally NOT ignored.
+# This is a binary crate — reproducible builds require a committed lockfile.
+
+# ─── Web UI (vendored npm workspace) ────────────────────────────────────────
+node_modules/
+web/**/dist/
+web/**/build/
+web/**/.vite/
+*.tsbuildinfo
+.npm/
+.npm-cache/
+.eslintcache
+web/webui/src/routeTree.gen.ts
+
+# ─── Runtime data & user configuration ──────────────────────────────────────
+# The daemon writes its SQLite database, logs and torrent cache into the
+# config dir; none of it belongs in git.
+/config/
+/data/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+# Anchored: an unanchored `logs/` also matches web/webui/src/features/Logs/
+# on case-insensitive filesystems, silently dropping source from commits.
+# The runtime logs live under /config/ or /data/, already ignored above.
+/logs/
+/torrent_cache/
+config.toml
+!config.example.toml
+
+# Working directories used while testing against real torrents
+input/
+output/
+links/
+torrents/
+*.torrent
+
+# ─── Environment ────────────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
 
-# Editors / OS
+# ─── AI / coding-agent workspaces ───────────────────────────────────────────
+# Everything an assistant drops in the tree: instructions, transcripts,
+# per-tool state. None of it is project source.
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.agents/
+AGENTS.md
+AGENT.md
+.codex/
+codex.md
+.cursor/
+.cursorrules
+.cursorignore
+.aider*
+.continue/
+.windsurf/
+.windsurfrules
+.github/copilot-instructions.md
+.gemini/
+GEMINI.md
+.opencode/
+.roo/
+.clinerules
+.junie/
+.sourcegraph/
+.specstory/
+.crush/
+.amazonq/
+.kiro/
+.zed/
+.mcp.json
+llms.txt
+
+# ─── Editors / OS noise ─────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
 *.swp
+*.swo
+*~

@@ -1,0 +1,14 @@
+crust-seed
+Copyright 2026 JohanDevl
+
+This product includes software developed as part of the cross-seed project
+(https://github.com/cross-seed/cross-seed), Copyright the cross-seed authors,
+licensed under the Apache License, Version 2.0.
+
+crust-seed is a rewrite of cross-seed in Rust. Its matching logic, option
+names, CLI surface and HTTP API are ported from that project, and its React
+web UI is vendored from it under `web/` — restyled and rebranded, but built
+on the same components.
+
+Files derived from cross-seed have been modified. See the git history for the
+specific changes.

@@ -1,0 +1,60 @@
+/*
+ * Layout for the two-column settings forms. Loaded by the settings route only,
+ * and processed by Tailwind, so theme() and the design tokens both resolve.
+ */
+
+.form-fieldset {
+  display: grid;
+  grid-template-areas: "col1 col2";
+  grid-template-columns: repeat(2, 1fr);
+  padding-block: theme("spacing.5");
+  margin-block-end: theme("spacing.6");
+
+  legend {
+    font-size: theme("fontSize.sm");
+    font-weight: theme("fontWeight.semibold");
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    padding-inline: theme("spacing.3");
+  }
+}
+
+.form-fieldset:nth-child(odd) {
+  grid-area: col1;
+}
+
+.form-fieldset:nth-child(even) {
+  grid-area: col2;
+}
+
+.form-field-switches {
+  display: flex;
+  flex-direction: row;
+  grid-column: span 2;
+
+  & .form-field__switch {
+    width: theme("width.1/6");
+  }
+}
+
+.form-input {
+  &[aria-invalid="true"] {
+    border-color: var(--color-destructive);
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-destructive) 22%, transparent);
+  }
+}
+
+/*
+ * The save bar floats over the end of a long form. A fade rather than a hard
+ * edge, so the last field does not look cut off.
+ */
+.form__submit {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--color-background) 0%, transparent),
+    var(--color-background) 45%
+  );
+  box-shadow: none;
+}

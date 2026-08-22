@@ -1,0 +1,28 @@
+# Logs
+# Anchored and directory-only: an unanchored `logs` also matches the
+# src/features/Logs/ source directory on case-insensitive filesystems
+# (git sets core.ignoreCase automatically on macOS and Windows), which
+# silently drops it from commits and breaks the build on a clean checkout.
+/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

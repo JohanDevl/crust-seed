@@ -1,0 +1,119 @@
+[package]
+name = "crust-seed"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Fully-automatic cross-seeding with Torznab — a Rust rewrite of cross-seed"
+license = "Apache-2.0"
+repository = "https://github.com/JohanDevl/crust-seed"
+
+[lib]
+name = "crust_seed"
+path = "src/lib.rs"
+
+[[bin]]
+name = "crust-seed"
+path = "src/main.rs"
+
+[dependencies]
+# ─── Async runtime ──────────────────────────────────────────────────────────
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# ─── HTTP server ────────────────────────────────────────────────────────────
+# axum replaces fastify: the tRPC endpoint, the legacy REST API, the static
+# web-UI plugin and the SSE subscription stream all hang off one router.
+axum = { version = "0.8", features = ["macros", "query", "json"] }
+axum-extra = { version = "0.10", features = ["cookie", "typed-header"] }
+tower = "0.5"
+tower-http = { version = "0.7", features = ["cors", "trace", "set-header"] }
+http = "1"
+mime_guess = "2"
+# The React SPA is compiled by a Node stage and baked into the binary, so the
+# runtime image needs no asset directory (mirrors fastify-static + copy-webui).
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+
+# ─── HTTP client ────────────────────────────────────────────────────────────
+# rustls avoids the openssl toolchain in the Docker builder.
+reqwest = { version = "0.13", default-features = false, features = [
+    "json",
+    "rustls",
+    "gzip",
+    "stream",
+    "multipart",
+    "cookies",
+] }
+
+# ─── Persistence ────────────────────────────────────────────────────────────
+# SQLite via sqlx replaces better-sqlite3 + knex. Migrations live in
+# ./migrations and are embedded at compile time.
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "sqlite",
+    "macros",
+    "migrate",
+    "chrono",
+    "json",
+] }
+
+# ─── Serialization ──────────────────────────────────────────────────────────
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_bencode = "0.2"
+serde_bytes = "0.11"
+quick-xml = { version = "0.41", features = ["serialize"] }
+toml = "1"
+
+# ─── Logging ────────────────────────────────────────────────────────────────
+# tracing + a daily-rotating file appender reproduces winston +
+# winston-daily-rotate-file (logs/ under the config dir, readable from the host).
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "local-time"] }
+tracing-appender = "0.2"
+
+# ─── Errors ─────────────────────────────────────────────────────────────────
+anyhow = "1"
+thiserror = "2"
+
+# ─── CLI ────────────────────────────────────────────────────────────────────
+clap = { version = "4", features = ["derive", "env", "wrap_help"] }
+owo-colors = "4"
+
+# ─── Domain helpers ─────────────────────────────────────────────────────────
+regex = "1"
+fancy-regex = "0.19"    # lookaround/backreference support the release-name regexes need
+strsim = "0.11"         # Levenshtein distance (fastest-levenshtein)
+chrono = { version = "0.4", features = ["serde"] }
+url = "2"
+percent-encoding = "2"
+form_urlencoded = "1"
+async-stream = "0.3"
+sha1 = "0.11"
+hex = "0.4"
+base64 = "0.23"
+bcrypt = "0.19"
+rand = "0.10"
+getrandom = "0.3"    # OS entropy for session ids and API keys
+# Copy-on-write file cloning for linkType = "reflink" (ioctl FICLONE on Linux,
+# clonefile on macOS). Hand-rolling those is unsafe platform-specific code.
+reflink-copy = "0.1"
+dirs = "6"
+dashmap = "6"
+
+[dev-dependencies]
+pretty_assertions = "1"
+tempfile = "3"
+tokio = { version = "1", features = ["test-util", "macros", "rt-multi-thread"] }
+wiremock = "0.6"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+
+# Build scripts and proc-macro crates are dylibs loaded by rustc itself.
+# Stripping them corrupts the dylib on macOS ("mis-aligned LINKEDIT string
+# pool"), so the release profile's `strip` must not reach them.
+[profile.release.build-override]
+strip = false

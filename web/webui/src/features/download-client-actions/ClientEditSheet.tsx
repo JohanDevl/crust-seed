@@ -1,0 +1,370 @@
+import { useState } from "react";
+import { useTRPC } from "@/lib/trpc";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { TestTube, Loader2 } from "lucide-react";
+import { useAppForm } from "@/hooks/form";
+import { formOpts } from "@/components/Form/shared-form";
+import { clientValidationSchema } from "@/types/config";
+import { useSaveConfigHook } from "@/hooks/saveFormHook";
+import useConfigForm from "@/hooks/use-config-form";
+import { FormValidationProvider } from "@/contexts/Form/form-validation-provider";
+import { buildClientUrl, buildClientTestUrl } from "./lib/urls";
+import { TDownloadClient } from "@/types/download-clients";
+import { testConnection } from "@/lib/test-connection";
+// import { Label as Labels } from '../../../../../src/logger';
+
+interface ClientEditSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "edit" | "create";
+  client: TDownloadClient | null;
+}
+
+const CLIENTS = {
+  qbittorrent: "qBittorrent",
+  rtorrent: "rTorrent",
+  transmission: "Transmission",
+  deluge: "Deluge",
+};
+
+export default function ClientEditSheet({
+  open,
+  onOpenChange,
+  mode,
+  client,
+}: ClientEditSheetProps) {
+  const [isTesting, setIsTesting] = useState(false);
+  const { isFieldRequired } = useConfigForm(clientValidationSchema);
+
+  // Get existing clients to compare against when saving
+  const trpc = useTRPC();
+  const { data: existingClients } = useQuery(
+    trpc.settings.get.queryOptions(undefined, {
+      select: (data) => data.config.torrentClients || [],
+    }),
+  );
+
+  const { saveConfigAsync, isLoading: isSaving } = useSaveConfigHook();
+
+  const form = useAppForm({
+    ...formOpts,
+    defaultValues: client ?? {},
+    onSubmit: async ({ value }) => {
+      // Full schema validation
+      try {
+        const sanitizedValue = {
+          ...value,
+          readOnly: (value as TDownloadClient | null)?.readOnly ?? false,
+        };
+        const result = clientValidationSchema.safeParse(sanitizedValue);
+        if (!result.success) {
+          console.error("FULL VALIDATION FAILED:", result.error.format());
+          throw new Error("Validation failed");
+        } else {
+          // build url first
+          const validatedData = result.data;
+          const clientString = buildClientUrl({
+            client: validatedData.client,
+            endpointUrl: validatedData.url,
+            username: validatedData.user ?? "",
+            password: validatedData.password ?? "",
+            readonly: validatedData.readOnly,
+            useApiKey: validatedData.useApiKey,
+            apiKey: validatedData.apiKey ?? "",
+          });
+
+          let updatedClients: string[];
+          if (mode === "edit" && client && client.index !== undefined) {
+            updatedClients = [...(existingClients || [])];
+            updatedClients[client.index] = clientString;
+          } else {
+            updatedClients = [...(existingClients || []), clientString];
+          }
+
+          await saveConfigAsync({ torrentClients: updatedClients });
+          onOpenChange(false);
+        }
+      } catch (err: unknown) {
+        console.error("Exception during full validation:", err);
+        return {
+          status: "error",
+          error: { _form: "An unexpected error occurred during validation" },
+        };
+      }
+    },
+    validators: {
+      onSubmit: clientValidationSchema,
+    },
+  });
+
+  const handleTest = async () => {
+    setIsTesting(true);
+    const client = String(form.getFieldValue("client"));
+    const url = String(form.getFieldValue("url"));
+    const username = String(
+      (form.getFieldValue("user") as string | undefined) ?? "",
+    );
+    const password = String(
+      (form.getFieldValue("password") as string | undefined) ?? "",
+    );
+    const useApiKey = form.getFieldValue("useApiKey") === true;
+    const apiKey = String(
+      (form.getFieldValue("apiKey") as string | undefined) ?? "",
+    );
+
+    const testUrl = buildClientTestUrl({
+      client,
+      endpointUrl: url,
+      username,
+      password,
+      useApiKey,
+      apiKey,
+    });
+    const result = await testConnection({
+      client,
+      url: testUrl,
+      username: useApiKey ? apiKey : username,
+      password: useApiKey ? "" : password,
+    });
+    if (result.success) {
+      toast.success("Connection successful!", {
+        description: "The torrent client connection was successful.",
+      });
+      setIsTesting(false);
+    } else {
+      toast.error("Connection failed", {
+        description: "Failed to connect to the torrent client.",
+      });
+      setIsTesting(false);
+    }
+  };
+
+  const isLoading = isSaving || isTesting;
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="sm:max-w-md">
+        <FormValidationProvider isFieldRequired={isFieldRequired}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void form.handleSubmit();
+            }}
+          >
+            <SheetHeader>
+              <SheetTitle>
+                {mode === "edit" ? "Edit Client" : "Create Client"}
+              </SheetTitle>
+              <SheetDescription>
+                {mode === "edit"
+                  ? "Edit the details of the torrent client."
+                  : "Create a new torrent client."}
+              </SheetDescription>
+            </SheetHeader>
+
+            <div className="grid flex-1 auto-rows-min gap-6 px-4">
+              <div className="grid gap-3">
+                <form.AppField name="client">
+                  {(field) => (
+                    <field.SelectField label="Client" options={CLIENTS} />
+                  )}
+                </form.AppField>
+              </div>
+
+              <div className="grid gap-3">
+                <form.AppField name="url">
+                  {(field) => <field.TextField label="Endpoint URL" />}
+                </form.AppField>
+              </div>
+
+              <form.Subscribe
+                selector={(state) => ({
+                  clientValue: (state.values as Partial<TDownloadClient>)
+                    .client,
+                  useApiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .useApiKey,
+                })}
+              >
+                {({ clientValue, useApiKeyValue }) => {
+                  // Only qBittorrent (5.2+) has API keys. For every other
+                  // client the toggle is hidden and the login fields stay.
+                  const supportsApiKey = clientValue === "qbittorrent";
+                  const usingApiKey = supportsApiKey && useApiKeyValue === true;
+                  return (
+                    <>
+                      {supportsApiKey && (
+                        <div className="grid gap-3">
+                          <form.AppField name="useApiKey">
+                            {(field) => (
+                              <field.SwitchField label="Use an API key instead of a login" />
+                            )}
+                          </form.AppField>
+                        </div>
+                      )}
+
+                      {usingApiKey ? (
+                        <div className="grid gap-3">
+                          <form.AppField name="apiKey">
+                            {(field) => (
+                              <field.TextField
+                                label="API Key"
+                                type="password"
+                                autoComplete="off"
+                                placeholder="qbt_..."
+                              />
+                            )}
+                          </form.AppField>
+                          <p className="text-muted-foreground -mt-1 px-2 text-sm italic">
+                            qBittorrent 5.2 and later. Generate one under
+                            Options → Web UI → API Key.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid gap-3">
+                            <form.AppField name="user">
+                              {(field) => <field.TextField label="User" />}
+                            </form.AppField>
+                          </div>
+
+                          <div className="grid gap-3">
+                            <form.AppField name="password">
+                              {(field) => (
+                                <field.TextField
+                                  label="Password"
+                                  type="password"
+                                />
+                              )}
+                            </form.AppField>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                }}
+              </form.Subscribe>
+
+              <div className="grid gap-3">
+                <form.AppField name="readOnly">
+                  {(field) => <field.SwitchField label="Read only" />}
+                </form.AppField>
+              </div>
+
+              <form.Subscribe
+                selector={(state) => ({
+                  urlValue: (state.values as Partial<TDownloadClient>).url,
+                  urlMeta: state.fieldMeta.url,
+                  userValue: (state.values as Partial<TDownloadClient>).user,
+                  userMeta: state.fieldMeta.user,
+                  passwordValue: (state.values as Partial<TDownloadClient>)
+                    .password,
+                  passwordMeta: state.fieldMeta.password,
+                  clientValue: (state.values as Partial<TDownloadClient>)
+                    .client,
+                  useApiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .useApiKey,
+                  apiKeyValue: (state.values as Partial<TDownloadClient>)
+                    .apiKey,
+                  apiKeyMeta: state.fieldMeta.apiKey,
+                })}
+              >
+                {({
+                  urlValue,
+                  urlMeta,
+                  userValue,
+                  userMeta,
+                  passwordValue,
+                  passwordMeta,
+                  clientValue,
+                  useApiKeyValue,
+                  apiKeyValue,
+                  apiKeyMeta,
+                }) => {
+                  // Determine if test button should be enabled
+                  const urlValid = urlValue && !urlMeta?.errors?.length;
+                  // Under an API key there is no password to require, so the
+                  // key itself is what has to be valid.
+                  const usingApiKey =
+                    clientValue === "qbittorrent" && useApiKeyValue === true;
+                  const credentialsValid = usingApiKey
+                    ? apiKeyValue && !apiKeyMeta?.errors?.length
+                    : (clientValue === "transmission" &&
+                      passwordValue === undefined
+                        ? true
+                        : passwordValue && !passwordMeta?.errors?.length) &&
+                      (clientValue === "deluge" ||
+                      clientValue === "transmission"
+                        ? true
+                        : userValue && !userMeta?.errors?.length);
+
+                  const canTest = urlValid && credentialsValid;
+                  return (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          void handleTest();
+                        }}
+                        disabled={!canTest}
+                        className="w-full"
+                      >
+                        {isTesting ? (
+                          <>
+                            <Loader2 className="animate-spin" />
+                            Testing connection...
+                          </>
+                        ) : (
+                          <>
+                            <TestTube className="mr-2" />
+                            Test Connection
+                          </>
+                        )}
+                      </Button>
+                      {clientValue === "qbittorrent" && (
+                        <p className="text-muted-foreground -mt-4 px-2 text-sm italic">
+                          Note: Testing connections can return false positives
+                          if{" "}
+                          <code className="bg-warning/15 text-warning rounded px-1 font-mono">
+                            Bypass auth on localhost
+                          </code>{" "}
+                          is enabled in qBittorrent.
+                        </p>
+                      )}
+                    </>
+                  );
+                }}
+              </form.Subscribe>
+            </div>
+
+            <SheetFooter className="mt-6">
+              <form.AppForm>
+                <form.SubmitButton
+                  label={mode === "edit" ? "Update" : "Create"}
+                  actionLabel={mode === "edit" ? "Updating..." : "Creating..."}
+                />
+              </form.AppForm>
+              <SheetClose asChild>
+                <Button type="button" variant="outline" disabled={isLoading}>
+                  Cancel
+                </Button>
+              </SheetClose>
+            </SheetFooter>
+          </form>
+        </FormValidationProvider>
+      </SheetContent>
+    </Sheet>
+  );
+}
