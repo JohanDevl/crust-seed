@@ -65,6 +65,14 @@ docker run -d \
   ghcr.io/johandevl/crust-seed:latest
 ```
 
+Or with Compose. Copy [`docker-compose.yml`](docker-compose.yml), replace the
+three `/path/to/...` placeholders, then:
+
+```bash
+mkdir -p ./config && sudo chown -R 65532:65532 ./config
+docker compose up -d
+```
+
 The container runs as UID/GID `65532:65532`; `chown` the config volume to match.
 
 Then open <http://localhost:2468> and create the first user. The signup window
@@ -95,10 +103,26 @@ produces a working daemon whose UI shows a placeholder page.
 
 ## Configuration
 
-Everything is configurable through the Web UI, which is the source of truth.
-For an initial setup you can drop a [`config.toml`](config.example.toml) into
-the config directory (`/config` in Docker, `~/.crust-seed` otherwise); it is
-imported into the database on first run and then renamed aside.
+There is no config file. Every option — indexers, torrent clients, link
+directories, schedules, notifications — is set in the Web UI and stored in the
+database next to it (`/config` in Docker, `~/.crust-seed` otherwise), so the
+running settings and what you see on screen can never disagree.
+
+Two things live outside that database, because they are needed before it is
+read:
+
+- `CONFIG_DIR` — where the database, logs and torrent cache go. The Docker
+  image sets it to `/config`.
+- A handful of per-invocation CLI flags (`--port`, `--host`, `--base-path`,
+  `--inject-dir`, …). They override the stored settings for one run and are
+  never written back.
+
+Coming from cross-seed, re-enter the settings from your `config.js` in the Web
+UI, then set the API key you already had so existing webhooks keep working:
+
+```bash
+crust-seed api-key --api-key <your-existing-key>
+```
 
 ## Commands
 
@@ -133,10 +157,11 @@ crust-seed aims to do the same things as cross-seed 7.x, and its Web UI is
 cross-seed's React app — restyled and rebranded, but the same components
 driving the same tRPC calls. Three things are deliberately different:
 
-- **Configuration file format.** cross-seed's `config.js` is executable
-  JavaScript that its Node daemon evaluates. crust-seed reads a declarative
-  `config.toml` (or `config.json`) with the same option names and the same
-  `ms`-style duration strings. See [`config.example.toml`](config.example.toml).
+- **No configuration file at all.** cross-seed's `config.js` is executable
+  JavaScript that its Node daemon evaluates, and a Rust binary cannot evaluate
+  it. Rather than invent a declarative file that would immediately drift from
+  whatever the Web UI writes, crust-seed keeps every option in the database and
+  makes the Web UI the only place to change it.
 - **No in-place upgrade from an existing `cross-seed.db`.** crust-seed creates
   its own database and rebuilds its caches from your client and data
   directories on first run. Search history is not carried over.

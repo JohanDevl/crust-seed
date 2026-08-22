@@ -63,7 +63,6 @@ serde_json = { version = "1", features = ["preserve_order"] }
 serde_bencode = "0.2"
 serde_bytes = "0.11"
 quick-xml = { version = "0.41", features = ["serialize"] }
-toml = "1"
 
 # ─── Logging ────────────────────────────────────────────────────────────────
 # tracing + a daily-rotating file appender reproduces winston +
