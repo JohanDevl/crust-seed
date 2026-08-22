@@ -633,7 +633,6 @@ dependencies = [
  "clap",
  "dashmap",
  "dirs",
- "dxr",
  "dxr_client",
  "fancy-regex",
  "futures",

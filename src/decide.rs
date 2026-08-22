@@ -671,6 +671,7 @@ mod tests {
 
     #[test]
     fn identical_trees_are_a_perfect_match() {
+        let _guard = crate::config::runtime::config_test_guard();
         set_runtime_config(default_runtime_config());
         let candidate = meta("Pack", &[(&["a.mkv"], 100), (&["b.mkv"], 200)]);
         let searchee = searchee_from(
@@ -682,6 +683,7 @@ mod tests {
 
     #[test]
     fn a_renamed_file_is_only_a_size_match() {
+        let _guard = crate::config::runtime::config_test_guard();
         set_runtime_config(default_runtime_config());
         let candidate = meta("Pack", &[(&["a.mkv"], 100), (&["b.mkv"], 200)]);
         let searchee = searchee_from(
@@ -696,6 +698,7 @@ mod tests {
     /// file — that would report a complete match for half the data.
     #[test]
     fn equal_length_files_are_consumed_not_reused() {
+        let _guard = crate::config::runtime::config_test_guard();
         set_runtime_config(default_runtime_config());
         let candidate = meta("Pack", &[(&["a.mkv"], 100), (&["b.mkv"], 100)]);
         let searchee = searchee_from("Other", vec![file("Other/x.mkv", 100)]);
@@ -704,6 +707,7 @@ mod tests {
 
     #[test]
     fn partial_size_ratio_counts_matched_bytes() {
+        let _guard = crate::config::runtime::config_test_guard();
         set_runtime_config(default_runtime_config());
         let candidate = meta("Pack", &[(&["a.mkv"], 100), (&["b.mkv"], 300)]);
         let searchee = searchee_from("Other", vec![file("Other/x.mkv", 100)]);
@@ -763,6 +767,7 @@ mod tests {
 
     #[test]
     fn fuzzy_size_uses_the_configured_threshold() {
+        let _guard = crate::config::runtime::config_test_guard();
         let mut config = default_runtime_config();
         config.fuzzy_size_threshold = 0.02;
         set_runtime_config(config);
@@ -776,6 +781,7 @@ mod tests {
     /// decision whose message tells the user flexible mode would accept it.
     #[tokio::test]
     async fn strict_mode_rejects_a_size_only_match_as_a_tree_mismatch() {
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.match_mode = MatchMode::Strict;
         config.include_single_episodes = true;
@@ -799,6 +805,7 @@ mod tests {
     /// Genuinely different sizes outside partial mode are a size mismatch.
     #[tokio::test]
     async fn differing_sizes_are_a_size_mismatch() {
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.match_mode = MatchMode::Flexible;
         config.include_single_episodes = true;
@@ -818,6 +825,7 @@ mod tests {
 
     #[tokio::test]
     async fn flexible_mode_accepts_a_size_only_match() {
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.match_mode = MatchMode::Flexible;
         config.include_single_episodes = true;
@@ -840,6 +848,7 @@ mod tests {
 
     #[tokio::test]
     async fn an_excluded_info_hash_short_circuits() {
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let config = default_runtime_config();
         set_runtime_config(config.clone());
         let candidate = meta("Pack", &[(&["a.mkv"], 100)]);
@@ -859,6 +868,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_same_info_hash_is_reported_separately() {
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let config = default_runtime_config();
         set_runtime_config(config.clone());
         let candidate = meta("Pack", &[(&["a.mkv"], 100)]);

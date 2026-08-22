@@ -5,6 +5,7 @@
 //! notes its counterpart and any behavioural divergence.
 
 pub mod arr;
+pub mod clients;
 pub mod config;
 pub mod constants;
 pub mod db;

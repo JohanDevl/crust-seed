@@ -56,6 +56,26 @@ pub fn overrides_from(pairs: impl IntoIterator<Item = (&'static str, Value)>) ->
     map
 }
 
+/// Serialises tests that install a process-global config.
+///
+/// The runtime config is deliberately global (the original kept a module-level
+/// `let`), so tests that set it would otherwise race under the default
+/// parallel test runner and read each other's values.
+#[cfg(test)]
+static CONFIG_TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+/// For synchronous tests.
+#[cfg(test)]
+pub fn config_test_guard() -> tokio::sync::MutexGuard<'static, ()> {
+    CONFIG_TEST_LOCK.blocking_lock()
+}
+
+/// For `#[tokio::test]` tests — a tokio guard may be held across an await.
+#[cfg(test)]
+pub async fn config_test_guard_async() -> tokio::sync::MutexGuard<'static, ()> {
+    CONFIG_TEST_LOCK.lock().await
+}
+
 /// Rebuilds the global from sparse overrides layered on the defaults.
 pub fn apply_overrides(overrides: &ConfigOverrides) -> Result<(), crate::errors::CrustSeedError> {
     set_runtime_config(merge_overrides(overrides)?);
@@ -69,6 +89,7 @@ mod tests {
 
     #[test]
     fn per_call_overrides_do_not_mutate_the_global() {
+        let _guard = config_test_guard();
         set_runtime_config(default_runtime_config());
         let overridden = get_runtime_config_with(&overrides_from([(
             "matchMode",

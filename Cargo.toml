@@ -101,7 +101,6 @@ unicode-normalization = "0.1"
 dashmap = "6"
 parking_lot = "0.12"
 notify = { version = "8", default-features = false, features = ["macos_fsevent"] }
-dxr = "0.8"
 dxr_client = { version = "0.8", features = ["reqwest"] }
 
 [dev-dependencies]
