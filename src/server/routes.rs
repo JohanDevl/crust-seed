@@ -30,9 +30,10 @@ use crate::user_auth::{SESSION_COOKIE_NAME, check_api_key, validate_session};
 // ─── tRPC transport ─────────────────────────────────────────────────────────
 
 pub fn trpc_router() -> Router<AppState> {
-    Router::new()
-        .route("/trpc/{*path}", get(trpc_get).post(trpc_post))
-        .route("/trpc/", get(trpc_get).post(trpc_post))
+    // Only the wildcard form: the client always appends a procedure path, and
+    // a bare "/trpc/" route would try to extract a path parameter that is not
+    // there.
+    Router::new().route("/trpc/{*path}", get(trpc_get).post(trpc_post))
 }
 
 fn session_id_from(headers: &HeaderMap) -> Option<String> {

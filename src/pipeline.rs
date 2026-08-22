@@ -403,7 +403,32 @@ pub async fn find_searchable_torrents(
         .filter_map(|s| s.info_hash.clone())
         .collect();
 
+    // Seasons assembled from individual episodes. They are exempt from the
+    // content filters — those reject single episodes, which is precisely what
+    // an ensemble is built from — but the blocklist still applies.
+    let ensemble_searchees = crate::ensemble::create_ensemble_searchees(
+        &real_searchees,
+        SearcheeLabel::Search,
+        config,
+        true,
+    )
+    .await;
+
     let mut valid: Vec<Searchee> = Vec::new();
+    for searchee in &ensemble_searchees {
+        if filter_by_content(
+            searchee,
+            config,
+            ContentFilterOptions {
+                block_list_only: true,
+                ..Default::default()
+            },
+        )
+        .await
+        {
+            valid.push(searchee.clone());
+        }
+    }
     for searchee in &real_searchees {
         if filter_by_content(searchee, config, ContentFilterOptions::default()).await {
             valid.push(searchee.clone());
@@ -443,7 +468,7 @@ pub async fn find_searchable_torrents(
     tracing::info!(
         label = Label::Search.as_str(),
         "Found {} torrents, {} suitable to search for matches using {unique_queries} unique queries",
-        real_searchees.len(),
+        real_searchees.len() + ensemble_searchees.len(),
         final_searchees.len()
     );
 
@@ -559,6 +584,10 @@ pub async fn check_new_candidate_match(
             searchees.push(searchee);
         }
     }
+    // A season-pack candidate can also be matched against loose episodes.
+    searchees.extend(
+        crate::ensemble::get_ensemble_for_candidate(pool, &candidate.name, label, config).await,
+    );
     let mut searchees = filter_dupes_from_similar(&searchees);
     if searchees.is_empty() {
         tracing::debug!(

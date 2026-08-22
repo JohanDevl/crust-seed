@@ -301,6 +301,47 @@ pub async fn jobs_loop(pool: SqlitePool) {
 /// the snatch-failure history, torrent-cache files nothing references any more,
 /// and decision rows whose cached torrent is gone.
 pub async fn cleanup_db(pool: &SqlitePool, config: &RuntimeConfig) {
+    // Re-read every client torrent: names, save paths, categories and tags all
+    // drift, and the cached rows are what searches and the blocklist read.
+    if config.use_client_torrents {
+        tracing::debug!(
+            label = Label::Cleanup.as_str(),
+            "Refreshing all client torrents..."
+        );
+        let mut searchees = Vec::new();
+        for client in crate::clients::get_clients() {
+            let options = crate::clients::GetSearcheesOptions {
+                refresh: Some(Vec::new()),
+                include_files: true,
+                include_trackers: true,
+                ..Default::default()
+            };
+            match client.get_client_searchees(options).await {
+                Ok(result) => searchees.extend(result.searchees),
+                Err(e) => tracing::error!(
+                    label = Label::Cleanup.as_str(),
+                    "Failed to refresh {}: {e}",
+                    client.label()
+                ),
+            }
+        }
+        if config.season_from_episodes.is_some() {
+            tracing::debug!(
+                label = Label::Cleanup.as_str(),
+                "Refreshing all ensemble torrents..."
+            );
+            let mut rows = Vec::new();
+            for searchee in &searchees {
+                if let Some(entries) =
+                    crate::torrent::index::cache_ensemble_torrent_entry(searchee, None).await
+                {
+                    rows.extend(entries);
+                }
+            }
+            let _ = crate::torrent::index::upsert_ensemble_rows(pool, &rows).await;
+        }
+    }
+
     tracing::debug!(
         label = Label::Cleanup.as_str(),
         "Pruning deleted dataDirs entries..."

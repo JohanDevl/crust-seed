@@ -14,6 +14,7 @@ pub mod constants;
 pub mod data_files;
 pub mod db;
 pub mod decide;
+pub mod ensemble;
 pub mod errors;
 pub mod health;
 pub mod http;

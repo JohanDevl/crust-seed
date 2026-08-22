@@ -495,7 +495,21 @@ pub async fn inject_saved_torrents(
         total: torrent_file_paths.len(),
         ..Default::default()
     };
-    let searchees = crate::pipeline::find_all_searchees(pool, SearcheeLabel::Inject, config).await;
+    let real_searchees =
+        crate::pipeline::find_all_searchees(pool, SearcheeLabel::Inject, config).await;
+    // Virtual seasons built from loose episodes, with the filters off: a
+    // torrent that already exists does not need the "is this season worth
+    // searching for" heuristics applied to its potential sources.
+    let mut searchees = real_searchees.clone();
+    searchees.extend(
+        crate::ensemble::create_ensemble_searchees(
+            &real_searchees,
+            SearcheeLabel::Inject,
+            config,
+            false,
+        )
+        .await,
+    );
 
     for torrent_file_path in &torrent_file_paths {
         inject_saved_torrent(
