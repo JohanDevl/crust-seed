@@ -188,7 +188,7 @@ pub fn media_type_of(title: &str, files: &[File]) -> MediaType {
 /// must be present — rather than by `fuzzySizeThreshold`.
 pub fn get_fuzzy_size_factor(searchee: &Searchee) -> f64 {
     let config = crate::config::runtime::get_runtime_config();
-    match config.season_from_episodes {
+    match config.season_from_episodes_ratio() {
         Some(season_from_episodes) if searchee.is_virtual() => 1.0 - season_from_episodes,
         _ => config.fuzzy_size_threshold,
     }
@@ -198,7 +198,7 @@ pub fn get_fuzzy_size_factor(searchee: &Searchee) -> f64 {
 /// candidate that must be satisfied for a partial match.
 pub fn get_min_size_ratio(searchee: &Searchee) -> f64 {
     let config = crate::config::runtime::get_runtime_config();
-    match config.season_from_episodes {
+    match config.season_from_episodes_ratio() {
         Some(season_from_episodes) if searchee.is_virtual() => season_from_episodes,
         _ => 1.0 - config.fuzzy_size_threshold,
     }

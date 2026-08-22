@@ -367,7 +367,7 @@ pub async fn reconcile_caches_for_config(
         crate::data_files::prune_data_outside_dirs(pool, &config.data_dirs).await?;
     }
 
-    if config.season_from_episodes.is_none() {
+    if config.season_from_episodes_ratio().is_none() {
         sqlx::query("DELETE FROM ensemble").execute(pool).await?;
     }
     Ok(())
@@ -454,7 +454,7 @@ pub async fn index_torrents_and_data_dirs(
         }
     }
 
-    if config.season_from_episodes.is_none() {
+    if config.season_from_episodes_ratio().is_none() {
         return Ok(());
     }
     let mut ensemble_rows = Vec::new();

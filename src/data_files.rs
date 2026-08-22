@@ -141,7 +141,7 @@ pub async fn index_data_paths(
             continue;
         };
 
-        if config.season_from_episodes.is_some()
+        if config.season_from_episodes_ratio().is_some()
             && let Some(pieces) = crate::torrent::index::create_ensemble_pieces(&title, &files)
         {
             let parent = path.parent().unwrap_or(Path::new("/")).to_path_buf();

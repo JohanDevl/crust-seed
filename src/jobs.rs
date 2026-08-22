@@ -325,7 +325,7 @@ pub async fn cleanup_db(pool: &SqlitePool, config: &RuntimeConfig) {
                 ),
             }
         }
-        if config.season_from_episodes.is_some() {
+        if config.season_from_episodes_ratio().is_some() {
             tracing::debug!(
                 label = Label::Cleanup.as_str(),
                 "Refreshing all ensemble torrents..."

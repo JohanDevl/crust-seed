@@ -405,7 +405,7 @@ pub fn timestamps_allow_search(
 
     // A virtual season keeps being searched while its episodes are still
     // arriving, regardless of when it was last searched.
-    if config.season_from_episodes.is_some()
+    if config.season_from_episodes_ratio().is_some()
         && searchee.is_virtual()
         && let Some(newest_file_age) = newest_file_age
         && (aggregate.earliest_last_search as f64) < newest_file_age

@@ -135,6 +135,20 @@ impl Default for RuntimeConfig {
     }
 }
 
+impl RuntimeConfig {
+    /// `seasonFromEpisodes` as an *enabled* ratio.
+    ///
+    /// The original stores `0` for "disabled" — `seasonFromEpisodes: null` and
+    /// `false` both normalise to `0`, and every JS call site then guards with
+    /// `if (!seasonFromEpisodes)`. In Rust `Some(0.0)` is not falsy, so reading
+    /// the field directly turns "disabled" into "enabled with a 0%
+    /// availability threshold", which would synthesise a virtual season out of
+    /// any three episodes. Every consumer must go through this.
+    pub fn season_from_episodes_ratio(&self) -> Option<f64> {
+        self.season_from_episodes.filter(|ratio| *ratio > 0.0)
+    }
+}
+
 /// `getDefaultRuntimeConfig()`.
 ///
 /// Note this is *not* `shared/constants.ts`'s `defaultConfig`, which the web UI
@@ -456,6 +470,22 @@ mod tests {
         let overrides = parse_runtime_config_overrides(value).unwrap();
         assert!(overrides.contains_key("delay"));
         assert!(!overrides.contains_key("notAnOption"));
+    }
+
+    /// `seasonFromEpisodes: null` / `false` normalise to 0, which the original
+    /// treats as disabled through JS falsiness. Some(0.0) must not read as
+    /// enabled, or any three episodes would become a virtual season.
+    #[test]
+    fn a_zero_season_from_episodes_reads_as_disabled() {
+        let mut config = default_runtime_config();
+        config.season_from_episodes = Some(0.0);
+        assert_eq!(config.season_from_episodes_ratio(), None);
+
+        config.season_from_episodes = None;
+        assert_eq!(config.season_from_episodes_ratio(), None);
+
+        config.season_from_episodes = Some(1.0);
+        assert_eq!(config.season_from_episodes_ratio(), Some(1.0));
     }
 
     #[test]

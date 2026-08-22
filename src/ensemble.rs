@@ -122,7 +122,7 @@ pub async fn create_ensemble_searchees(
     config: &RuntimeConfig,
     use_filters: bool,
 ) -> Vec<Searchee> {
-    let Some(season_from_episodes) = config.season_from_episodes else {
+    let Some(season_from_episodes) = config.season_from_episodes_ratio() else {
         return Vec::new();
     };
     if all_searchees.is_empty() {
@@ -301,7 +301,7 @@ pub async fn get_ensemble_for_candidate(
     label: SearcheeLabel,
     config: &RuntimeConfig,
 ) -> Vec<Searchee> {
-    if config.season_from_episodes.is_none() {
+    if config.season_from_episodes_ratio().is_none() {
         return Vec::new();
     }
     let Some(season_keys) = get_season_keys(&strip_extension(candidate_name)) else {
@@ -562,6 +562,21 @@ mod tests {
         )
         .await;
         assert!(season.is_none(), "4/12 episodes must not become a season");
+    }
+
+    /// A config with seasonFromEpisodes disabled (the file form is `null` or
+    /// `false`, both stored as 0) must build nothing.
+    #[tokio::test]
+    async fn a_zero_ratio_disables_the_feature() {
+        let dir = tempfile::tempdir().unwrap();
+        let episodes = episodes_on_disk(dir.path(), 5).await;
+        let mut config = default_runtime_config();
+        config.season_from_episodes = Some(0.0);
+        assert!(
+            create_ensemble_searchees(&episodes, SearcheeLabel::Inject, &config, false)
+                .await
+                .is_empty()
+        );
     }
 
     #[tokio::test]
