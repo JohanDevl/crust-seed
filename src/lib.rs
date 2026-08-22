@@ -4,6 +4,7 @@
 //! Module names map onto the original TypeScript files; each module's header
 //! notes its counterpart and any behavioural divergence.
 
+pub mod action;
 pub mod arr;
 pub mod clients;
 pub mod config;

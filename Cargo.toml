@@ -96,6 +96,9 @@ bcrypt = "0.19"
 rand = "0.10"
 uuid = { version = "1", features = ["v4"] }
 walkdir = "2"
+# Copy-on-write file cloning for linkType = "reflink" (ioctl FICLONE on Linux,
+# clonefile on macOS). Hand-rolling those is unsafe platform-specific code.
+reflink-copy = "0.1"
 dirs = "6"
 unicode-normalization = "0.1"
 dashmap = "6"
