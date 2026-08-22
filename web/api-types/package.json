@@ -1,5 +1,5 @@
 {
-	"name": "@cross-seed/api-types",
+	"name": "@crust-seed/api-types",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -18,7 +18,7 @@
 		"typecheck": "tsc -b tsconfig.json --force"
 	},
 	"dependencies": {
-		"@cross-seed/shared": "file:../shared",
+		"@crust-seed/shared": "file:../shared",
 		"@trpc/server": "^11.13.4",
 		"zod": "^4.3.6"
 	}

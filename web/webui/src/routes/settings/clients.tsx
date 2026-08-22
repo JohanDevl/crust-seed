@@ -1,4 +1,4 @@
-import { Action } from "@cross-seed/shared/constants";
+import { Action } from "@crust-seed/shared/constants";
 import { useEffect, useState } from "react";
 import useConfigForm from "@/hooks/use-config-form";
 import { defaultDownloadClientFormValues } from "@/components/Form/shared-form";
@@ -41,7 +41,7 @@ import { TDownloadClient } from "@/types/download-clients";
 import { useSettingsFormSubmit } from "@/hooks/use-settings-form-submit";
 import { useSaveConfigHook } from "@/hooks/saveFormHook";
 import z from "zod";
-import { RuntimeConfig } from "@cross-seed/shared/configSchema";
+import { RuntimeConfig } from "@crust-seed/shared/configSchema";
 
 type ClientOptionsFormData = z.input<typeof downloaderValidationSchema>;
 

@@ -12,7 +12,7 @@
  */
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import type { RuntimeConfig } from "@cross-seed/shared/configSchema";
+import type { RuntimeConfig } from "@crust-seed/shared/configSchema";
 
 const t = initTRPC.create();
 const { router } = t;
@@ -20,7 +20,7 @@ const proc = t.procedure;
 
 /** Never executed — the routers below are types, not an implementation. */
 function unimplemented(): never {
-	throw new Error("@cross-seed/api-types is a type-only contract");
+	throw new Error("@crust-seed/api-types is a type-only contract");
 }
 const out = <T,>() => unimplemented() as T;
 

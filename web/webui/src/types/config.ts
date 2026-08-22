@@ -3,8 +3,8 @@ import {
   Action,
   LinkType,
   ZodErrorMessages,
-} from "@cross-seed/shared/constants";
-import { RUNTIME_CONFIG_SCHEMA } from "@cross-seed/shared/configSchema";
+} from "@crust-seed/shared/constants";
+import { RUNTIME_CONFIG_SCHEMA } from "@crust-seed/shared/configSchema";
 
 const runtimeShape = RUNTIME_CONFIG_SCHEMA.shape;
 

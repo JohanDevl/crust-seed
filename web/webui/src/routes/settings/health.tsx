@@ -7,7 +7,7 @@ import {
   OctagonAlert,
   RefreshCw,
 } from "lucide-react";
-import { humanReadableSize } from "@cross-seed/shared/utils";
+import { humanReadableSize } from "@crust-seed/shared/utils";
 import { Button } from "@/components/ui/button";
 import {
   Table,

@@ -16,8 +16,8 @@
     "prebuild": "npm -C .. run generate:routes"
   },
   "dependencies": {
-    "@cross-seed/api-types": "file:../api-types",
-    "@cross-seed/shared": "file:../shared",
+    "@crust-seed/api-types": "file:../api-types",
+    "@crust-seed/shared": "file:../shared",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-dialog": "^1.1.13",

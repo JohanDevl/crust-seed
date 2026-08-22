@@ -25,7 +25,7 @@ import {
   RuntimeConfig,
   WebhookEntry,
   WebhookObjectSchema,
-} from "@cross-seed/shared/configSchema";
+} from "@crust-seed/shared/configSchema";
 
 type ConnectFormData = z.infer<typeof connectValidationSchema>;
 

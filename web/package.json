@@ -1,7 +1,7 @@
 {
 	"name": "crust-seed-web",
 	"version": "0.0.0",
-	"description": "Vendored cross-seed web UI, built into the crust-seed binary",
+	"description": "Web UI vendored from cross-seed, restyled and built into the crust-seed binary",
 	"private": true,
 	"type": "module",
 	"workspaces": [
@@ -10,7 +10,7 @@
 		"webui"
 	],
 	"scripts": {
-		"build": "npm -w @cross-seed/shared run build && npm -w @cross-seed/api-types run build && npm -w webui run build",
+		"build": "npm -w @crust-seed/shared run build && npm -w @crust-seed/api-types run build && npm -w webui run build",
 		"dev": "npm -w webui run dev",
 		"typecheck": "npm --workspaces run typecheck --if-present",
 		"lint": "npm --workspaces run lint --if-present",
