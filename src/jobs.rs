@@ -79,6 +79,19 @@ static JOBS: LazyLock<RwLock<Vec<Arc<Job>>>> = LazyLock::new(|| RwLock::new(Vec:
 /// Serialises `check_jobs`, so a manual trigger cannot race the timer.
 static CHECK_JOBS_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
+/// Serialises tests that install a job list.
+///
+/// `create_jobs` replaces the whole global registry, so under the default
+/// parallel test runner one test enabling RSS would decide what another test
+/// sees when it asks whether RSS is disabled.
+#[cfg(test)]
+static JOBS_TEST_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+#[cfg(test)]
+async fn jobs_test_guard() -> tokio::sync::MutexGuard<'static, ()> {
+    JOBS_TEST_LOCK.lock().await
+}
+
 /// Builds the job list from the configuration.
 ///
 /// RSS and search only exist when their cadence is set; inject only when the
@@ -513,6 +526,8 @@ mod tests {
 
     #[tokio::test]
     async fn jobs_exist_only_when_their_config_enables_them() {
+        // create_jobs replaces the process-global registry.
+        let _guard = jobs_test_guard().await;
         let mut config = default_runtime_config();
         config.rss_cadence = None;
         config.search_cadence = None;
@@ -542,6 +557,8 @@ mod tests {
 
     #[tokio::test]
     async fn triggering_a_disabled_job_reports_it() {
+        // create_jobs replaces the process-global registry.
+        let _guard = jobs_test_guard().await;
         let mut config = default_runtime_config();
         config.rss_cadence = None;
         create_jobs(&config).await;
@@ -554,6 +571,8 @@ mod tests {
 
     #[tokio::test]
     async fn triggering_sets_the_run_ahead_flag_and_overrides() {
+        // create_jobs replaces the process-global registry.
+        let _guard = jobs_test_guard().await;
         let mut config = default_runtime_config();
         config.rss_cadence = Some(60_000);
         create_jobs(&config).await;

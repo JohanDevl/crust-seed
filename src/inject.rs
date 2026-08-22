@@ -707,6 +707,8 @@ mod tests {
 
     #[tokio::test]
     async fn matches_are_ranked_full_before_size_only_before_partial() {
+        // set_runtime_config installs the process-global config.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.match_mode = crate::constants::MatchMode::Partial;
         config.include_single_episodes = true;
@@ -734,6 +736,8 @@ mod tests {
     /// `--ignore-titles` retry, rather than deleting it as unmatchable.
     #[tokio::test]
     async fn a_title_mismatch_is_reported_rather_than_matched() {
+        // set_runtime_config installs the process-global config.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.include_single_episodes = true;
         set_runtime_config(config.clone());
@@ -762,6 +766,8 @@ mod tests {
 
     #[tokio::test]
     async fn blocklisted_searchees_are_reported_separately_from_no_matches() {
+        // set_runtime_config installs the process-global config.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
         let mut config = default_runtime_config();
         config.include_single_episodes = true;
         config.block_list = vec!["name:Some.Show".into()];
