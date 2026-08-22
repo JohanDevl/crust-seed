@@ -3,6 +3,7 @@
 pub mod bencode;
 pub mod cache;
 pub mod index;
+pub mod lookup;
 pub mod metafile;
 pub mod snatch;
 

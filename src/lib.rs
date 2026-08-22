@@ -16,6 +16,7 @@ pub mod errors;
 pub mod http;
 pub mod indexers;
 pub mod logger;
+pub mod pipeline;
 pub mod prefilter;
 pub mod problems;
 pub mod push_notifier;
