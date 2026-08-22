@@ -8,6 +8,7 @@ pub mod arr;
 pub mod config;
 pub mod constants;
 pub mod db;
+pub mod decide;
 pub mod errors;
 pub mod http;
 pub mod indexers;
