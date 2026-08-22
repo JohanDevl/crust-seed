@@ -2,62 +2,34 @@
 //!
 //! Ported from `startup.ts`.
 //!
-//! Configuration is resolved in one of three ways, in order:
-//!
-//! 1. **Database** — the normal path once the app has run at least once.
-//! 2. **Config file** — imported into the database on first run and then
-//!    renamed aside, so the file and the web UI can never disagree.
-//! 3. **Defaults** — a fresh install, which also gets an API key generated.
+//! Configuration lives in the database and nowhere else. A first run stores
+//! the defaults and generates an API key; every later run reads back what the
+//! web UI has written. There is no config file to keep in sync — see
+//! `config/mod.rs` for why.
 
 use sqlx::SqlitePool;
 
 use crate::config::db_config::{get_db_config, set_db_config};
-use crate::config::file::{get_file_config, transform_file_config};
 use crate::config::runtime::set_runtime_config;
 use crate::config::{
-    ConfigOverrides, RuntimeConfig, create_app_dir_hierarchy, default_runtime_config,
+    ConfigOverrides, RuntimeConfig, app_dir, create_app_dir_hierarchy, default_runtime_config,
     merge_overrides,
 };
 use crate::errors::CrustSeedError;
 use crate::logger::Label;
 use crate::utils::not_exists;
 
-const MIGRATED_CONFIG_COMMENT: &str = "# This config file was imported into the crust-seed database. Use the Web UI to view or change settings.\n\n";
-
-/// Resolves the effective configuration, importing a file config on first run.
+/// Resolves the effective configuration from the database, seeding it with the
+/// defaults on a fresh install.
 pub async fn determine_runtime_config(
     pool: &SqlitePool,
     cli_overrides: &ConfigOverrides,
 ) -> Result<RuntimeConfig, CrustSeedError> {
+    warn_about_abandoned_config_files().await;
+
     let stored = get_db_config(pool).await.unwrap_or_default();
     if !stored.is_empty() {
         return apply(&stored, cli_overrides);
-    }
-
-    match get_file_config() {
-        Ok(Some((path, file_config))) => {
-            let overrides = transform_file_config(&file_config);
-            let config = merge_overrides(&overrides)?;
-            set_db_config(pool, &config).await?;
-            match backup_file_config(&path).await {
-                Ok(backup) => tracing::info!(
-                    label = Label::Config.as_str(),
-                    "Migrated file config to database; settings now live in the database and Web UI. Preserved the old config file as {}.",
-                    backup.file_name().unwrap_or_default().to_string_lossy()
-                ),
-                Err(e) => tracing::warn!(
-                    label = Label::Config.as_str(),
-                    "Imported the config file but could not rename it aside: {e}"
-                ),
-            }
-            return apply(&crate::config::strip_defaults(&config), cli_overrides);
-        }
-        Ok(None) => {}
-        Err(e) => {
-            // A malformed config must not silently become "defaults": the user
-            // would see cross-seed running with settings they never chose.
-            return Err(e);
-        }
     }
 
     let defaults = default_runtime_config();
@@ -70,6 +42,25 @@ pub async fn determine_runtime_config(
     apply(&ConfigOverrides::new(), cli_overrides)
 }
 
+/// Earlier versions read a `config.toml`/`config.json` from the app directory.
+/// A user upgrading from one of those would otherwise see their file silently
+/// stop taking effect, so say so instead of ignoring it in silence. The file is
+/// never parsed — only its presence is checked.
+async fn warn_about_abandoned_config_files() {
+    let dir = app_dir();
+    for name in ["config.toml", "config.json", "config.js"] {
+        let path = dir.join(name);
+        if not_exists(&path).await {
+            continue;
+        }
+        tracing::warn!(
+            label = Label::Config.as_str(),
+            "Ignoring {}: crust-seed is configured entirely through the Web UI, and settings live in the database. Delete the file once you have re-entered its settings.",
+            path.display()
+        );
+    }
+}
+
 fn apply(
     stored: &ConfigOverrides,
     cli_overrides: &ConfigOverrides,
@@ -80,28 +71,6 @@ fn apply(
         merged.insert(key.clone(), value.clone());
     }
     merge_overrides(&merged)
-}
-
-/// Renames the imported config aside, never overwriting an existing backup.
-async fn backup_file_config(path: &std::path::Path) -> std::io::Result<std::path::PathBuf> {
-    let base = path.with_extension(format!(
-        "{}.bak",
-        path.extension().and_then(|e| e.to_str()).unwrap_or("")
-    ));
-    let mut backup = base.clone();
-    let mut index = 1;
-    while !not_exists(&backup).await {
-        backup = base.with_extension(format!("bak.{index}"));
-        index += 1;
-    }
-    tokio::fs::rename(path, &backup).await?;
-
-    // Prepend an explanation so a user who finds the file later knows why it
-    // stopped being read.
-    if let Ok(contents) = tokio::fs::read_to_string(&backup).await {
-        let _ = tokio::fs::write(&backup, format!("{MIGRATED_CONFIG_COMMENT}{contents}")).await;
-    }
-    Ok(backup)
 }
 
 /// Creates `outputDir` and every `linkDir` that does not exist yet.
@@ -227,10 +196,10 @@ mod tests {
         unsafe { std::env::remove_var("CONFIG_DIR") };
     }
 
-    /// The file config is imported once and then renamed aside, so the file and
-    /// the web UI cannot disagree afterwards.
+    /// A config file left over from an older version must not change what the
+    /// daemon runs with: the database is the only source of settings now.
     #[tokio::test]
-    async fn a_file_config_is_imported_and_moved_aside() {
+    async fn a_leftover_config_file_is_ignored() {
         // CONFIG_DIR is process-global; serialise the tests that set it.
         let _guard = crate::config::runtime::config_test_guard_async().await;
         let dir = tempfile::tempdir().unwrap();
@@ -243,46 +212,19 @@ mod tests {
         let config = determine_runtime_config(&pool, &ConfigOverrides::new())
             .await
             .unwrap();
-        assert_eq!(config.delay, 75);
+        assert_eq!(config.delay, default_runtime_config().delay);
 
-        assert!(!dir.path().join("config.toml").exists());
-        assert_eq!(get_db_config(&pool).await.unwrap()["delay"], json!(75));
+        // The file is left where it is — crust-seed no longer owns it — and its
+        // contents never reach the database.
+        assert!(dir.path().join("config.toml").exists());
+        assert!(get_db_config(&pool).await.unwrap().is_empty());
         unsafe { std::env::remove_var("CONFIG_DIR") };
     }
 
-    /// Migrating from cross-seed means keeping its API key, or every webhook
-    /// already configured in qBittorrent, autobrr and the *arrs stops working
-    /// with no indication of why.
+    /// A file that would once have failed to parse is now simply not read, so
+    /// it cannot stop the daemon from starting.
     #[tokio::test]
-    async fn an_imported_api_key_survives_the_migration() {
-        // CONFIG_DIR is process-global; serialise the tests that set it.
-        let _guard = crate::config::runtime::config_test_guard_async().await;
-        let dir = tempfile::tempdir().unwrap();
-        unsafe { std::env::set_var("CONFIG_DIR", dir.path()) };
-        let api_key = "98b1000000000000000000000000000000000000000000ff";
-        tokio::fs::write(
-            dir.path().join("config.toml"),
-            format!("apiKey = \"{api_key}\"\n"),
-        )
-        .await
-        .unwrap();
-
-        let pool = test_pool().await;
-        determine_runtime_config(&pool, &ConfigOverrides::new())
-            .await
-            .unwrap();
-        assert_eq!(
-            crate::user_auth::get_api_key(&pool).await.unwrap(),
-            api_key,
-            "the configured key must be the one the API accepts"
-        );
-        unsafe { std::env::remove_var("CONFIG_DIR") };
-    }
-
-    /// A malformed config must fail loudly rather than silently starting with
-    /// settings the user never chose.
-    #[tokio::test]
-    async fn a_malformed_config_file_is_an_error() {
+    async fn a_malformed_config_file_no_longer_blocks_startup() {
         // CONFIG_DIR is process-global; serialise the tests that set it.
         let _guard = crate::config::runtime::config_test_guard_async().await;
         let dir = tempfile::tempdir().unwrap();
@@ -295,7 +237,7 @@ mod tests {
         assert!(
             determine_runtime_config(&pool, &ConfigOverrides::new())
                 .await
-                .is_err()
+                .is_ok()
         );
         unsafe { std::env::remove_var("CONFIG_DIR") };
     }
