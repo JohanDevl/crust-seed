@@ -1,0 +1,149 @@
+# crust-seed configuration
+#
+# Copy this file to your config directory as `config.toml`:
+#   Docker: /config/config.toml
+#   Linux/macOS: ~/.crust-seed/config.toml
+#   Windows: %LOCALAPPDATA%\crust-seed\config.toml
+#
+# It is read ONCE, on the first run. crust-seed imports it into its database,
+# renames it to `config.toml.bak`, and from then on the Web UI is the source of
+# truth. Every option below is also editable in the UI.
+#
+# Migrating from cross-seed's `config.js`? The option names are identical. Turn
+# `export default { key: value }` into `key = value`, quote strings, use
+# [square, brackets] for arrays, and `#` instead of `//` for comments. A
+# `config.json` with the same keys is accepted too.
+
+# ─── Torrent sources ────────────────────────────────────────────────────────
+# Where crust-seed looks for the content you already have. Configure at least
+# one of useClientTorrents, torrentDir or dataDirs.
+
+# Read the torrent list from the client itself. Recommended.
+useClientTorrents = true
+
+# Torrent clients, as "<type>:<url>" or "<type>:readonly:<url>".
+# Types: qbittorrent, rtorrent, transmission, deluge
+# torrentClients = [
+#   "qbittorrent:http://username:password@localhost:8080",
+#   "deluge:http://:password@localhost:8112/json",
+#   "transmission:http://username:password@localhost:9091/transmission/rpc",
+#   "rtorrent:http://username:password@localhost:8080/RPC2",
+# ]
+torrentClients = []
+
+# A directory of .torrent files, as an alternative to useClientTorrents.
+# Mutually exclusive with useClientTorrents.
+# torrentDir = "/torrents"
+
+# Directories of downloaded content, for matching data you have without the
+# original torrent.
+dataDirs = []
+# How many levels below a dataDir to treat as release roots.
+maxDataDepth = 2
+
+# ─── Indexers ───────────────────────────────────────────────────────────────
+# Torznab URLs from Prowlarr or Jackett, each with its apikey. Indexers added
+# here are mirrored into the database and are then managed in the Web UI.
+torznab = []
+
+# Sonarr/Radarr instances, used to resolve external IDs for exact searches.
+sonarr = []
+radarr = []
+
+# ─── Matching ───────────────────────────────────────────────────────────────
+# strict:   file names and sizes must match exactly
+# flexible: sizes must match; names may differ (requires linking)
+# partial:  most of the content must match (requires linking)
+matchMode = "flexible"
+
+# How far a candidate's total size may drift, as a fraction.
+fuzzySizeThreshold = 0.02
+
+# Build a virtual season from individual episodes when this fraction of the
+# season is present. Set to `false` to disable.
+seasonFromEpisodes = 1
+
+# Match individual episodes, not just packs. Off by default: it produces a lot
+# of low-value matches.
+includeSingleEpisodes = false
+# Match releases that are mostly not video.
+includeNonVideos = false
+
+# Skip anything matching these entries. Prefixes: name:, nameRegex:, folder:,
+# folderRegex:, category:, tag:, tracker:, infoHash:, sizeBelow:, sizeAbove:
+blockList = []
+
+# ─── Action ─────────────────────────────────────────────────────────────────
+# inject: add matches to the torrent client
+# save:   only write .torrent files to outputDir
+action = "inject"
+
+# Where saved .torrent files go. Defaults to <configDir>/cross-seeds.
+# outputDir = "/config/cross-seeds"
+
+# Directory of .torrent files for `crust-seed inject` to process.
+# injectDir = "/inject"
+
+# Where matched content is linked so the client can seed it. Required for
+# flexible and partial matching with action = "inject".
+linkDirs = []
+# hardlink, symlink, reflink, or reflinkOrCopy
+linkType = "hardlink"
+# Link into linkDir/ directly instead of linkDir/<tracker>/.
+flatLinking = false
+# Category/label applied to injected torrents.
+linkCategory = "cross-seed-link"
+# Also duplicate the source torrent's own category with a .cross-seed suffix.
+duplicateCategories = false
+
+# Skip the hash check on injection. Safe for full matches; partial matches and
+# disc-based releases are always rechecked regardless.
+skipRecheck = true
+# Auto-resume a partial match missing at most this many bytes (max 52428800).
+autoResumeMaxDownload = 52428800
+# Resume even when the missing bytes are only samples, trailers and subtitles.
+ignoreNonRelevantFilesToResume = false
+
+# ─── Scheduling ─────────────────────────────────────────────────────────────
+# Durations accept "30 seconds", "2 weeks", "1d", or a number of milliseconds.
+
+# Seconds to wait between indexer searches (30-3600). Be kind to trackers.
+delay = 30
+
+searchCadence = "1 day"
+rssCadence = "30 minutes"
+
+# Do not re-search a title searched within this window.
+excludeRecentSearch = "3 days"
+# Do not search a title first seen longer ago than this.
+excludeOlder = "2 weeks"
+# Maximum searches per indexer per run.
+searchLimit = 400
+
+searchTimeout = "2 minutes"
+snatchTimeout = "30 seconds"
+
+# ─── Web UI and API ─────────────────────────────────────────────────────────
+port = 2468
+host = "0.0.0.0"
+# Serve behind a reverse-proxy sub-path, e.g. "/crust-seed".
+basePath = ""
+
+# API key for /api/announce, /api/webhook and the Prowlarr integration.
+# Generated automatically on first run; `crust-seed api-key` prints it.
+# apiKey = "at-least-24-characters-long"
+
+# ─── Notifications ──────────────────────────────────────────────────────────
+# Either a bare URL, or a table with custom headers and payload. Placeholders
+# available in a custom payload: {source} {performedAction} {name}
+# {numTrackers} {trackersListStr} {searcheeSource} {decisions} {trackers}
+# {result} {paused} {infoHashes}
+notificationWebhookUrls = []
+# notificationWebhookUrls = [
+#   "https://notifiarr.com/api/v1/notification/crossSeed/YOUR_KEY",
+#   { url = "https://discord.com/api/webhooks/...", payload = { content = "{performedAction} {name} on {trackersListStr}" } },
+# ]
+
+# ─── Logging ────────────────────────────────────────────────────────────────
+# Raise the console log level. The verbose log file is always written.
+verbose = false

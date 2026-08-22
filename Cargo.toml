@@ -119,3 +119,9 @@ wiremock = "0.6"
 lto = true
 strip = true
 codegen-units = 1
+
+# Build scripts and proc-macro crates are dylibs loaded by rustc itself.
+# Stripping them corrupts the dylib on macOS ("mis-aligned LINKEDIT string
+# pool"), so the release profile's `strip` must not reach them.
+[profile.release.build-override]
+strip = false
