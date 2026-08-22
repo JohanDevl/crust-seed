@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/time";
 import { useTRPC } from "@/lib/trpc";
 import { useSubscription } from "@trpc/tanstack-react-query";
@@ -21,6 +22,22 @@ interface LogEntry {
   label?: string;
   message: string;
 }
+
+/**
+ * Log levels get their own badge tone. Kept as a table so the filter chips and
+ * the per-row badges cannot drift apart, and so every colour comes from a
+ * theme token rather than a fixed palette class.
+ */
+const LEVEL_VARIANT: Record<
+  string,
+  "destructive" | "warning" | "info" | "success" | "muted"
+> = {
+  error: "destructive",
+  warn: "warning",
+  info: "info",
+  verbose: "success",
+  debug: "muted",
+};
 
 export function Logs() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -127,30 +144,15 @@ export function Logs() {
             (level) => (
               <Badge
                 key={level}
-                variant={levelFilters.has(level) ? "default" : "outline"}
-                className={`hover:bg-muted cursor-pointer select-none ${
-                  level === "error"
-                    ? levelFilters.has(level)
-                      ? "bg-red-500 hover:bg-red-600"
-                      : "border-red-200 text-red-500"
-                    : level === "warn"
-                      ? levelFilters.has(level)
-                        ? "bg-yellow-500 hover:bg-yellow-600"
-                        : "border-yellow-200 text-yellow-500"
-                      : level === "info"
-                        ? levelFilters.has(level)
-                          ? "bg-blue-500 hover:bg-blue-600"
-                          : "border-blue-200 text-blue-500"
-                        : level === "verbose"
-                          ? levelFilters.has(level)
-                            ? "bg-gray-500 hover:bg-gray-600"
-                            : "border-gray-200 text-gray-500"
-                          : level === "debug"
-                            ? levelFilters.has(level)
-                              ? "bg-purple-500 hover:bg-purple-600"
-                              : "border-purple-200 text-purple-500"
-                            : ""
-                }`}
+                variant={
+                  levelFilters.has(level) ? LEVEL_VARIANT[level] : "outline"
+                }
+                className={cn(
+                  "cursor-pointer px-3 py-1 select-none",
+                  levelFilters.has(level)
+                    ? "hover:brightness-95"
+                    : "text-muted-foreground/60 border-border/60 border-dashed line-through hover:no-underline",
+                )}
                 onClick={() => {
                   setLevelFilters((prev) => {
                     const newFilters = new Set(prev);
@@ -200,10 +202,10 @@ export function Logs() {
       </div>
 
       {filteredLogs.length > 0 ? (
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="bg-card ring-border/70 overflow-hidden rounded-2xl shadow-sm ring-1">
           <Table ref={tableRef}>
-            <TableHeader className="bg-muted sticky top-0 z-10">
-              <TableRow className="border-b">
+            <TableHeader className="bg-muted/95 sticky top-0 z-10 backdrop-blur">
+              <TableRow>
                 <TableHead className="w-32">Time</TableHead>
                 <TableHead className="w-24">Level</TableHead>
                 <TableHead className="w-32">Label</TableHead>
@@ -214,7 +216,7 @@ export function Logs() {
               {filteredLogs.map((log, index) => (
                 <TableRow
                   key={`${log.timestamp}-${index}`}
-                  className="hover:bg-muted/50 h-8"
+                  className="hover:bg-accent/40 h-8"
                 >
                   <TableCell
                     className="font-mono text-xs"
@@ -224,28 +226,8 @@ export function Logs() {
                   </TableCell>
                   <TableCell className="py-1">
                     <Badge
-                      variant={
-                        log.level === "error"
-                          ? "destructive"
-                          : log.level === "warn"
-                            ? "secondary"
-                            : log.level === "info"
-                              ? "default"
-                              : log.level === "debug"
-                                ? "outline"
-                                : "secondary"
-                      }
-                      className={
-                        log.level === "warn"
-                          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
-                          : log.level === "info"
-                            ? "bg-blue-500 text-white hover:bg-blue-600"
-                            : log.level === "verbose"
-                              ? "bg-gray-500 text-white hover:bg-gray-600"
-                              : log.level === "debug"
-                                ? "bg-purple-500 text-white hover:bg-purple-600"
-                                : ""
-                      }
+                      variant={LEVEL_VARIANT[log.level] ?? "muted"}
+                      className="w-16"
                     >
                       {log.level}
                     </Badge>
@@ -273,7 +255,7 @@ export function Logs() {
       ) : (
         <div className="text-muted-foreground items-center justify-center py-16">
           <div className="mb-2 flex items-center gap-2">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+            <div className="bg-success size-2 animate-pulse rounded-full"></div>
             <span className="text-sm font-medium">
               {logs.length === 0
                 ? "Waiting for logs..."

@@ -137,30 +137,25 @@ function DebugSettings() {
   return (
     <Page breadcrumbs={["Diagnostics", "Debug"]} actions={actions}>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Debug Settings</h1>
-          <p className="text-muted-foreground">
-            Raw JSON editor for debugging configuration issues
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Raw JSON editor for debugging configuration issues.
+        </p>
 
         <div className="relative">
           <textarea
             ref={textareaRef}
             value={jsonValue}
             onChange={(e) => handleJsonChange(e.target.value)}
-            className={`min-h-96 w-full resize-none overflow-hidden rounded-md border p-3 font-mono text-sm ${
-              isValid
-                ? "border-gray-300 dark:border-gray-600"
-                : "border-red-500 dark:border-red-400"
-            } bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100`}
+            className={`min-h-96 w-full resize-none overflow-hidden rounded-xl border p-4 font-mono text-sm shadow-sm ${
+              isValid ? "border-input" : "border-destructive"
+            } bg-background text-foreground`}
             spellCheck={false}
             placeholder="Loading settings..."
           />
         </div>
 
         {!isValid && (
-          <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
+          <div className="bg-destructive/10 text-destructive border-destructive/20 rounded-lg border p-3 text-sm">
             <strong>JSON Error:</strong> {parseError}
           </div>
         )}

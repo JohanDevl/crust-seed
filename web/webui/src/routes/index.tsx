@@ -2,8 +2,40 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useTRPC } from "@/lib/trpc";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  Activity,
+  CircleCheck,
+  Crosshair,
+  Database,
+  Download,
+  Gauge,
+  Percent,
+  Radar,
+  Search,
+  TriangleAlert,
+} from "lucide-react";
 import { StatCard } from "@/components/ui/stat-card";
 import { Page } from "@/components/Page";
+
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="space-y-3">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <h2 className="eyebrow">{title}</h2>
+        <span className="text-muted-foreground/80 text-xs">{hint}</span>
+      </div>
+      {children}
+    </section>
+  );
+}
 
 function Home() {
   const trpc = useTRPC();
@@ -33,75 +65,103 @@ function Home() {
 
   return (
     <Page breadcrumbs={["Dashboard"]}>
-      <div className="main space-y-8">
-        <section className="space-y-4">
-          <div className={`grid gap-4 md:grid-cols-2 ${topGridCols}`}>
+      <Section
+        title="Coverage"
+        hint="What crust-seed is watching and asking for"
+      >
+        <div className={`grid gap-4 sm:grid-cols-2 ${topGridCols}`}>
+          <StatCard
+            title="Total Searchees"
+            value={statsData.totalSearchees.toLocaleString()}
+            description="Torrents being monitored"
+            icon={<Database />}
+            tone="primary"
+          />
+          {showDistinctQueryCount && (
             <StatCard
-              title="Total Searchees"
-              value={statsData.totalSearchees.toLocaleString()}
-              description="Torrents being monitored"
+              title="Total Search Queries"
+              value={statsData.queryCount.toLocaleString()}
+              description="Distinct estimated searches"
+              icon={<Search />}
             />
-            {showDistinctQueryCount && (
-              <StatCard
-                title="Total Search Queries"
-                value={statsData.queryCount.toLocaleString()}
-                description="Distinct estimated searches"
-              />
-            )}
+          )}
+          <StatCard
+            title="Total Query-Indexer Pairs"
+            value={statsData.queryIndexerCount.toLocaleString()}
+            description="Unique indexer searches"
+            icon={<Radar />}
+          />
+          <StatCard
+            title="Total Snatches"
+            value={statsData.snatchCount.toLocaleString()}
+            description="Unique infohash attempts"
+            icon={<Download />}
+          />
+          <StatCard
+            title="Total Matches"
+            value={statsData.totalMatches.toLocaleString()}
+            description="Unique cross-seeds found"
+            icon={<CircleCheck />}
+            tone="success"
+          />
+        </div>
+      </Section>
+
+      <Section
+        title="Conversion"
+        hint="How much of that effort turns into matches"
+      >
+        <div className={`grid gap-4 sm:grid-cols-2 ${conversionGridCols}`}>
+          <StatCard
+            title="Matches per Searchee"
+            value={statsData.matchRate.toFixed(2)}
+            description="Average matches per monitored torrent"
+            icon={<Gauge />}
+          />
+          {showMatchesPerQuery && (
             <StatCard
-              title="Total Query-Indexer Pairs"
-              value={statsData.queryIndexerCount.toLocaleString()}
-              description="Unique indexer searches"
+              title="Matches per Query"
+              value={statsData.matchesPerQuery.toFixed(2)}
+              description="Matches per search estimate"
+              icon={<Crosshair />}
             />
-            <StatCard
-              title="Total Snatches"
-              value={statsData.snatchCount.toLocaleString()}
-              description="Unique infohash attempts"
-            />
-            <StatCard
-              title="Total Matches"
-              value={statsData.totalMatches.toLocaleString()}
-              description="Unique cross-seeds found"
-            />
-          </div>
-          <div className={`grid gap-4 md:grid-cols-2 ${conversionGridCols}`}>
-            <StatCard
-              title="Matches per Searchee"
-              value={statsData.matchRate.toFixed(2)}
-              description="Average matches per monitored torrent"
-            />
-            {showMatchesPerQuery && (
-              <StatCard
-                title="Matches per Query"
-                value={statsData.matchesPerQuery.toFixed(2)}
-                description="Matches per search estimate"
-              />
-            )}
-            <StatCard
-              title="Match Rate"
-              value={`${(statsData.matchesPerQueryIndexer * 100).toFixed(1)}%`}
-              description="of indexer searches find a match"
-            />
-            <StatCard
-              title="Wasted Snatches"
-              value={`${(statsData.wastedSnatchRate * 100).toFixed(1)}%`}
-              description={`${statsData.wastedSnatchCount.toLocaleString()} snatched but mismatched`}
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <StatCard
-              title={indexerHealthTitle}
-              value={indexerHealthValue}
-              description={indexerHealthDescription}
-            />
-            <StatCard
-              title="Recent Activity"
-              value={statsData.recentMatches.toLocaleString()}
-              description="Matches in last 24h"
-            />
-          </div>
-        </section>
-      </div>
+          )}
+          <StatCard
+            title="Match Rate"
+            value={`${(statsData.matchesPerQueryIndexer * 100).toFixed(1)}%`}
+            description="of indexer searches find a match"
+            icon={<Percent />}
+          />
+          <StatCard
+            title="Wasted Snatches"
+            value={`${(statsData.wastedSnatchRate * 100).toFixed(1)}%`}
+            description={`${statsData.wastedSnatchCount.toLocaleString()} snatched but mismatched`}
+            icon={<TriangleAlert />}
+            tone={statsData.wastedSnatchRate > 0 ? "warning" : "default"}
+          />
+        </div>
+      </Section>
+
+      <Section title="Status" hint="Right now">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard
+            title={indexerHealthTitle}
+            value={indexerHealthValue}
+            description={indexerHealthDescription}
+            icon={
+              statsData.allIndexersHealthy ? <CircleCheck /> : <TriangleAlert />
+            }
+            tone={statsData.allIndexersHealthy ? "success" : "warning"}
+          />
+          <StatCard
+            title="Recent Activity"
+            value={statsData.recentMatches.toLocaleString()}
+            description="Matches in last 24h"
+            icon={<Activity />}
+            tone="primary"
+          />
+        </div>
+      </Section>
     </Page>
   );
 }

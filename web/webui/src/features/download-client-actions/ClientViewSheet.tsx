@@ -36,7 +36,7 @@ export default function ClientViewSheet({
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="grid gap-3">
             <Label>URL</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+            <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
               {client?.url || "N/A"}
             </div>
           </div>
@@ -44,7 +44,7 @@ export default function ClientViewSheet({
           {client?.useApiKey ? (
             <div className="grid gap-3">
               <Label>API Key</Label>
-              <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+              <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
                 {client?.apiKey ? "********" : "N/A"}
               </div>
             </div>
@@ -52,14 +52,14 @@ export default function ClientViewSheet({
             <>
               <div className="grid gap-3">
                 <Label>Username</Label>
-                <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+                <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
                   {client?.user || "N/A"}
                 </div>
               </div>
 
               <div className="grid gap-3">
                 <Label>Password</Label>
-                <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+                <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
                   {client?.password ? "********" : "N/A"}
                 </div>
               </div>
@@ -68,7 +68,7 @@ export default function ClientViewSheet({
 
           <div className="grid gap-3">
             <Label>Read only</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+            <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
               {client?.readOnly ? "Yes" : "No"}
             </div>
           </div>

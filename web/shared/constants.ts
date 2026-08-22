@@ -58,7 +58,7 @@ export const ZodErrorMessages = {
 		"excludeRecentSearch must be at least 3x searchCadence.",
 	excludeRecentOlder:
 		"excludeOlder and excludeRecentSearch must be defined for searching. excludeOlder must be 2-5x excludeRecentSearch.",
-	injectNeedsInjectMode: "`cross-seed inject` requires the 'inject' action.",
+	injectNeedsInjectMode: "`crust-seed inject` requires the 'inject' action.",
 	autoResumeMaxDownloadUnsupported:
 		"autoResumeMaxDownload must be an integer of bytes between between 0 and 52428800 (50 MiB).",
 	numberMustBeRatio:
@@ -74,7 +74,7 @@ export const ZodErrorMessages = {
 	includeSingleEpisodes:
 		"includeSingleEpisodes is not recommended when using announce, please read: https://www.cross-seed.org/docs/v6-migration#updated-includesingleepisodes-behavior",
 	invalidOutputDir:
-		"outputDir should only contain .torrent files, cross-seed will populate and manage (https://www.cross-seed.org/docs/basics/options#outputdir)",
+		"outputDir should only contain .torrent files, crust-seed will populate and manage (https://www.cross-seed.org/docs/basics/options#outputdir)",
 	torrentDirAndUseClientTorrents:
 		"You cannot have both torrentDir and useClientTorrents.",
 	needsClient: "You need to have a client configured for useClientTorrents.",

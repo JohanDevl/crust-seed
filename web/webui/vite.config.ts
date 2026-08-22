@@ -6,7 +6,7 @@ import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
-  base: command === "build" ? "/__CROSS_SEED_BASE_PATH__/" : "/",
+  base: command === "build" ? "/__CRUST_SEED_BASE_PATH__/" : "/",
   plugins: [
     TanStackRouterVite({ target: "react", autoCodeSplitting: true }),
     react(),

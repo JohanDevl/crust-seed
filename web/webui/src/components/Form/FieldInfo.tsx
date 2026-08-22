@@ -15,7 +15,7 @@ export const FieldInfo: FC<FieldInfoProps> = ({
   if (fieldMeta.errors && fieldMeta.errors.length > 0) {
     return (
       <>
-        <span className="text-sm text-red-600">
+        <span className="text-destructive text-sm font-medium">
           {fieldMeta.errors.map((error, i) => {
             if (typeof error === "object" && error !== null) {
               // Handle the case where error is an object

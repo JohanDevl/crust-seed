@@ -171,8 +171,7 @@ function TrackerSettings() {
         // Still rate limited
         return (
           <Badge
-            variant="destructive"
-            className="bg-red-700"
+            variant="warning"
             title={`Rate limited until ${formatRetryAfter(indexer.retryAfter)}`}
           >
             Rate Limited
@@ -180,20 +179,12 @@ function TrackerSettings() {
         );
       } else {
         // Rate limit has expired, show as OK
-        return (
-          <Badge variant="default" className="bg-green-700">
-            OK
-          </Badge>
-        );
+        return <Badge variant="success">OK</Badge>;
       }
     }
 
     if (indexer.status === "UNKNOWN_ERROR") {
-      return (
-        <Badge variant="destructive" className="bg-red-700">
-          Error
-        </Badge>
-      );
+      return <Badge variant="destructive">Error</Badge>;
     }
 
     if (indexer.searchCap === null) {
@@ -201,11 +192,7 @@ function TrackerSettings() {
     }
 
     if (indexer.status === null || indexer.status === "OK") {
-      return (
-        <Badge variant="default" className="bg-green-700">
-          OK
-        </Badge>
-      );
+      return <Badge variant="success">OK</Badge>;
     }
 
     return <Badge variant="outline">{indexer.status}</Badge>;
@@ -340,17 +327,14 @@ function TrackerSettings() {
   return (
     <Page breadcrumbs={["Settings", "Trackers"]} actions={addTrackerButton}>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Trackers</h1>
-          <p className="text-muted-foreground">
-            Manage your torznab indexers and trackers
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Manage your Torznab indexers and trackers.
+        </p>
 
-        <div className="overflow-x-auto rounded-lg border">
+        <div className="bg-card ring-border/70 overflow-x-auto rounded-2xl shadow-sm ring-1">
           <Table>
-            <TableHeader className="bg-muted sticky top-0 z-10">
-              <TableRow className="border-b">
+            <TableHeader className="bg-muted/95 sticky top-0 z-10 backdrop-blur">
+              <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead>Status</TableHead>

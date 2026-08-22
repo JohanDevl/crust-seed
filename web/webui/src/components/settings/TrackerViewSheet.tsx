@@ -148,7 +148,7 @@ export default function TrackerViewSheet({
         <div className="grid flex-1 auto-rows-min gap-6 px-4">
           <div className="grid gap-3">
             <Label>Tracker Name</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 text-sm">
+            <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 text-sm">
               {tracker.name || "Unnamed"}
             </div>
           </div>
@@ -164,7 +164,7 @@ export default function TrackerViewSheet({
 
           <div className="grid gap-3">
             <Label>URL</Label>
-            <div className="bg-muted/50 rounded-md border px-3 py-2 font-mono text-sm break-all">
+            <div className="bg-muted/60 border-border/70 rounded-lg border px-3 py-2 font-mono text-sm break-all">
               {tracker.url}
             </div>
           </div>

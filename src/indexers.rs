@@ -403,7 +403,7 @@ pub async fn collect_indexer_problems(pool: &SqlitePool) -> Result<Vec<Problem>,
             "indexer:none-configured",
             ProblemSeverity::Error,
             "No indexers configured.",
-            "Add at least one indexer so cross-seed can search for releases.",
+            "Add at least one indexer so crust-seed can search for releases.",
         ));
         return Ok(problems);
     }
@@ -417,7 +417,7 @@ pub async fn collect_indexer_problems(pool: &SqlitePool) -> Result<Vec<Problem>,
             "indexer:none-enabled",
             ProblemSeverity::Error,
             "All configured indexers are disabled.",
-            "Enable at least one indexer so cross-seed can run searches.",
+            "Enable at least one indexer so crust-seed can run searches.",
         ));
     }
 
@@ -442,7 +442,7 @@ pub async fn collect_indexer_problems(pool: &SqlitePool) -> Result<Vec<Problem>,
                 ProblemSeverity::Warning,
                 format!("Indexer \"{name}\" is rate limited."),
                 format!(
-                    "Cross-seed will retry after {}.",
+                    "Crust-seed will retry after {}.",
                     human_readable_date(indexer.retry_after.unwrap_or(0))
                 ),
             ));
@@ -462,7 +462,7 @@ pub async fn collect_indexer_problems(pool: &SqlitePool) -> Result<Vec<Problem>,
                 format!("indexer:disabled:{}", indexer.id),
                 ProblemSeverity::Info,
                 format!("Indexer \"{name}\" is disabled."),
-                "Re-enable the indexer if you want cross-seed to include it in searches.",
+                "Re-enable the indexer if you want crust-seed to include it in searches.",
             ));
         }
     }

@@ -155,14 +155,11 @@ function ConnectSettings() {
   }, [lastFieldAdded]);
 
   return (
-    <Page>
+    <Page breadcrumbs={["Settings", "Connect"]}>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Connected App Settings</h1>
-          <p className="text-muted-foreground">
-            Manage apps connected to Cross-seed.
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Manage the apps connected to crust-seed.
+        </p>
         <FormValidationProvider isFieldRequired={isFieldRequired}>
           <form
             className="form flex flex-col gap-4"
@@ -191,7 +188,7 @@ function ConnectSettings() {
                   </form.AppField>
                 </div>
               </fieldset>
-              <fieldset className="form-fieldset border-border w-full gap-6 rounded-md border">
+              <fieldset className="form-fieldset bg-card ring-border/70 w-full gap-6 rounded-2xl px-5 shadow-sm ring-1">
                 <legend>Connect to Other Apps</legend>
                 <div className="">
                   <form.Field name="sonarr" mode="array" validators={{}}>
@@ -201,7 +198,7 @@ function ConnectSettings() {
                           <Label htmlFor={field.name} className="block w-full">
                             Sonarr URL(s)
                             {isFieldRequired(field.name) && (
-                              <span className="pl-1 text-red-500">*</span>
+                              <span className="text-destructive pl-1">*</span>
                             )}
                           </Label>
                           {field.state.value &&
@@ -274,7 +271,7 @@ function ConnectSettings() {
                           <Label htmlFor={field.name} className="block w-full">
                             Radarr URL(s)
                             {isFieldRequired(field.name) && (
-                              <span className="pl-1 text-red-500">*</span>
+                              <span className="text-destructive pl-1">*</span>
                             )}
                           </Label>
                           {field.state.value &&
@@ -351,14 +348,14 @@ function ConnectSettings() {
                           <Label htmlFor={field.name} className="block w-full">
                             Notification Webhook(s)
                             {isFieldRequired(field.name) && (
-                              <span className="pl-1 text-red-500">*</span>
+                              <span className="text-destructive pl-1">*</span>
                             )}
                           </Label>
                           {field.state.value?.map(
                             (_: WebhookFormEntry, index: number) => (
                               <fieldset
                                 key={index}
-                                className="border-border space-y-2 rounded-md border p-3"
+                                className="bg-muted/40 border-border/70 space-y-2 rounded-xl border p-3"
                               >
                                 <div className="flex items-center gap-2">
                                   <form.Field
@@ -487,7 +484,7 @@ function ConnectSettings() {
                                                   )
                                                 }
                                                 onBlur={subfield.handleBlur}
-                                                placeholder='{"topic": "cross-seed", "priority": 3, "tags": ["seedbox"]}'
+                                                placeholder='{"topic": "crust-seed", "priority": 3, "tags": ["seedbox"]}'
                                                 rows={2}
                                                 className="resize-y font-mono text-xs"
                                               />

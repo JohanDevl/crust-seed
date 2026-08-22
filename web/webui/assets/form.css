@@ -1,13 +1,21 @@
+/*
+ * Layout for the two-column settings forms. Loaded by the settings route only,
+ * and processed by Tailwind, so theme() and the design tokens both resolve.
+ */
+
 .form-fieldset {
   display: grid;
   grid-template-areas: "col1 col2";
   grid-template-columns: repeat(2, 1fr);
-  padding-block: theme("spacing.4");
-  margin-block-end: theme("spacing.5");
+  padding-block: theme("spacing.5");
+  margin-block-end: theme("spacing.6");
 
   legend {
-    font-size: theme("fontSize.lg");
+    font-size: theme("fontSize.sm");
     font-weight: theme("fontWeight.semibold");
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
     padding-inline: theme("spacing.3");
   }
 }
@@ -31,18 +39,22 @@
 }
 
 .form-input {
-  padding-block: theme("spacing.1");
-  padding-inline: theme("spacing.2");
-  box-shadow: none;
-
   &[aria-invalid="true"] {
     border-color: var(--color-destructive);
-    box-shadow: 0 0 0 2px
-      color-mix(in oklab, var(--color-destructive) 40%, transparent);
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-destructive) 22%, transparent);
   }
 }
 
-/* Add a subtle fade between the button and the form */
+/*
+ * The save bar floats over the end of a long form. A fade rather than a hard
+ * edge, so the last field does not look cut off.
+ */
 .form__submit {
-  box-shadow: 0 -25px 25px var(--color-background);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklab, var(--color-background) 0%, transparent),
+    var(--color-background) 45%
+  );
+  box-shadow: none;
 }

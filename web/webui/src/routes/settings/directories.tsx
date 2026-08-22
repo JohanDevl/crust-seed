@@ -68,14 +68,11 @@ function DirectorySettings() {
   }, [lastFieldAdded]);
 
   return (
-    <Page>
+    <Page breadcrumbs={["Settings", "Directories & Paths"]}>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Directory & Path Settings</h1>
-          <p className="text-muted-foreground">
-            Manage the directories and paths used by cross-seed.
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Manage the directories and paths used by crust-seed.
+        </p>
         <FormValidationProvider isFieldRequired={isFieldRequired}>
           <form
             className="form flex flex-col gap-4"
@@ -96,7 +93,7 @@ function DirectorySettings() {
                         <Label htmlFor={field.name} className="block w-full">
                           Data Directories
                           {isFieldRequired(field.name) && (
-                            <span className="pl-1 text-red-500">*</span>
+                            <span className="text-destructive pl-1">*</span>
                           )}
                         </Label>
                         {field.state.value.map(
@@ -186,7 +183,7 @@ function DirectorySettings() {
                           <Label htmlFor={field.name} className="block w-full">
                             Link Directories
                             {isFieldRequired(field.name) && (
-                              <span className="pl-1 text-red-500">*</span>
+                              <span className="text-destructive pl-1">*</span>
                             )}
                           </Label>
                           {field.state.value?.map(

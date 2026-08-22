@@ -286,7 +286,7 @@ async fn run(cli: Cli) -> Result<(), CrustSeedError> {
                 crust_seed::user_auth::create_dev_login(&pool, &username, &origin, &redirect_to)
                     .await?;
             println!("{url}");
-            println!("Start the daemon with CROSS_SEED_DEV_LOGIN=true for this URL to work.");
+            println!("Start the daemon with CRUST_SEED_DEV_LOGIN=true for this URL to work.");
             Ok(())
         }
     }

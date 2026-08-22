@@ -48,14 +48,11 @@ function SearchRssSettings() {
   });
 
   return (
-    <Page>
+    <Page breadcrumbs={["Settings", "Search & RSS"]}>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Search & RSS Settings</h1>
-          <p className="text-muted-foreground">
-            Manage search and RSS options.
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Manage search and RSS options.
+        </p>
         <FormValidationProvider isFieldRequired={isFieldRequired}>
           <form
             className="form flex flex-col gap-4"

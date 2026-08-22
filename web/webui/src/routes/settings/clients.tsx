@@ -154,7 +154,10 @@ function TorrentClientsSettings() {
           // An API key is stored in the username position with no password.
           // Without splitting it back out here, editing the client would show
           // the key sitting in the User field with the toggle off.
-          if (clientApp === "qbittorrent" && clientUrlUsesApiKey(user, password)) {
+          if (
+            clientApp === "qbittorrent" &&
+            clientUrlUsesApiKey(user, password)
+          ) {
             useApiKey = true;
             apiKey = user;
             user = "";
@@ -257,15 +260,14 @@ function TorrentClientsSettings() {
       actions={addClientButton}
     >
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-bold">Torrent Clients</h1>
-          <p className="text-muted-foreground">Manage your torrent clients</p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          Manage the clients crust-seed injects matched torrents into.
+        </p>
         {clients ? (
-          <div className="mt-4 mb-7 overflow-x-auto rounded-lg border">
+          <div className="bg-card ring-border/70 mt-4 mb-7 overflow-x-auto rounded-2xl shadow-sm ring-1">
             <Table>
-              <TableHeader className="bg-muted sticky top-0 z-10">
-                <TableRow className="border-b">
+              <TableHeader className="bg-muted/95 sticky top-0 z-10 backdrop-blur">
+                <TableRow>
                   <TableHead>Client</TableHead>
                   <TableHead>RPC URL</TableHead>
                   <TableHead>Read only</TableHead>

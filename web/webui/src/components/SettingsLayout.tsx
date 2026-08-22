@@ -6,9 +6,14 @@ interface SettingsLayoutProps {
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
   return (
-    <div className="mb-5">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">Edit Config</h2>
+    <div className="pb-6">
+      <div className="border-border/70 mb-6 flex flex-wrap items-center justify-between gap-3 border-b pb-4">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">Edit config</h2>
+          <p className="text-muted-foreground mt-0.5 text-sm">
+            Changes are saved to the database and take effect immediately.
+          </p>
+        </div>
         <ImportConfigButton />
       </div>
       {children}

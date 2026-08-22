@@ -1,6 +1,6 @@
 export default function RequiredIndicator() {
   return (
-    <span className="text-red-500" title="Required">
+    <span className="text-destructive ml-0.5" title="Required">
       *
     </span>
   );

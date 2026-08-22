@@ -28,9 +28,9 @@ const severityOrder = {
 } as const;
 
 const severityStyles = {
-  error: "border-red-500/60 bg-red-500/10",
-  warning: "border-amber-500/60 bg-amber-500/10",
-  info: "border-sky-500/60 bg-sky-500/10",
+  error: "border-destructive/40 bg-destructive/10 text-destructive",
+  warning: "border-warning/40 bg-warning/10 text-warning",
+  info: "border-info/40 bg-info/10 text-info",
 } as const;
 
 const severityIcon = {
@@ -83,16 +83,13 @@ function HealthPage() {
       }
     >
       <div className="space-y-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl font-semibold">Health</h1>
-          <p className="text-muted-foreground text-sm">
-            A quick snapshot of anything that needs attention. Issues are
-            ordered by severity.
-          </p>
-        </div>
+        <p className="text-muted-foreground -mt-2 max-w-2xl text-sm">
+          A quick snapshot of anything that needs attention. Issues are ordered
+          by severity.
+        </p>
 
         {sortedProblems.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700">
+          <div className="border-success/40 bg-success/10 text-success flex items-center gap-3 rounded-xl border p-4 text-sm">
             <CheckCircle2 className="h-5 w-5" />
             <div>
               <p className="font-medium">All clear</p>
@@ -109,7 +106,7 @@ function HealthPage() {
                 <div
                   key={problem.id}
                   className={cn(
-                    "flex items-start gap-3 rounded-lg border p-4 text-sm",
+                    "flex items-start gap-3 rounded-xl border p-4 text-sm",
                     severityStyles[problem.severity],
                   )}
                 >
@@ -130,7 +127,7 @@ function HealthPage() {
           <div className="space-y-1">
             <h2 className="text-lg font-semibold">Database diagnostics</h2>
             <p className="text-muted-foreground text-sm">
-              Disk usage and SQLite stats for your cross-seed database.
+              Disk usage and SQLite stats for your crust-seed database.
             </p>
           </div>
 
@@ -141,14 +138,14 @@ function HealthPage() {
           ) : (
             <div className="space-y-4">
               {db.error && (
-                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-700">
+                <div className="border-warning/40 bg-warning/10 text-warning rounded-xl border p-4 text-sm">
                   <p className="font-medium">Diagnostics error</p>
                   <p className="text-muted-foreground">{db.error}</p>
                 </div>
               )}
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">Database file</p>
                   <p className="text-base font-semibold">
                     {formatSizeValue(db.sizes.db)}
@@ -157,13 +154,13 @@ function HealthPage() {
                     {db.path}
                   </p>
                 </div>
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">WAL file</p>
                   <p className="text-base font-semibold">
                     {formatSizeValue(db.sizes.wal)}
                   </p>
                 </div>
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">SHM file</p>
                   <p className="text-base font-semibold">
                     {formatSizeValue(db.sizes.shm)}
@@ -172,19 +169,19 @@ function HealthPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">Page size</p>
                   <p className="text-base font-semibold">
                     {formatSizeValue(db.pageSize)}
                   </p>
                 </div>
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">Page count</p>
                   <p className="text-base font-semibold">
                     {formatCount(db.pageCount)}
                   </p>
                 </div>
-                <div className="rounded-lg border p-4 text-sm">
+                <div className="bg-card ring-border/70 rounded-xl p-4 text-sm shadow-sm ring-1">
                   <p className="text-muted-foreground">Freelist pages</p>
                   <p className="text-base font-semibold">
                     {formatCount(db.freelistCount)}
@@ -203,10 +200,10 @@ function HealthPage() {
               )}
 
               {db.dbstatTop && db.dbstatTop.length > 0 && (
-                <div className="rounded-lg border">
+                <div className="bg-card ring-border/70 overflow-hidden rounded-2xl shadow-sm ring-1">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-b">
+                      <TableRow>
                         <TableHead>Object</TableHead>
                         <TableHead className="text-right">Size</TableHead>
                         <TableHead className="text-right">Pages</TableHead>

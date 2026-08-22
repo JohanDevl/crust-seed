@@ -12,8 +12,13 @@ type SwitchFieldProps = {
 const SwitchField: FC<SwitchFieldProps> = ({ className, label }) => {
   const field = useFieldContext();
   return (
-    <div className={cn("form-field__switch flex items-center", className)}>
-      <Label htmlFor={field.name} className="mr-3">
+    <div
+      className={cn("form-field__switch flex items-center gap-3", className)}
+    >
+      <Label
+        htmlFor={field.name}
+        className="text-foreground/90 text-sm font-medium"
+      >
         {label}
       </Label>
       <Switch

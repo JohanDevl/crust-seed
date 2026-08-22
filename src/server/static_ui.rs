@@ -3,7 +3,7 @@
 //! Ported from `routes/staticFrontendPlugin.ts`.
 //!
 //! The SPA is built with Vite's `base` set to the literal
-//! `/__CROSS_SEED_BASE_PATH__/`, which the server rewrites at request time.
+//! `/__CRUST_SEED_BASE_PATH__/`, which the server rewrites at request time.
 //! That is what lets one build work at `/` and behind any reverse-proxy base
 //! path — but it also means serving the files verbatim yields a UI whose asset
 //! URLs all 404.
@@ -20,7 +20,7 @@ use super::AppState;
 #[folder = "$CARGO_MANIFEST_DIR/web/webui/dist"]
 struct WebUi;
 
-const SENTINEL_BASE_PATH: &str = "/__CROSS_SEED_BASE_PATH__";
+const SENTINEL_BASE_PATH: &str = "/__CRUST_SEED_BASE_PATH__";
 
 /// Extensions whose contents are text and may therefore contain the sentinel.
 const TEXT_EXTENSIONS: &[&str] = &[".html", ".css", ".js", ".mjs", ".json", ".map"];
@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn the_sentinel_is_replaced_with_the_configured_base_path() {
-        let html = br#"<script src="/__CROSS_SEED_BASE_PATH__/assets/index.js"></script>"#;
+        let html = br#"<script src="/__CRUST_SEED_BASE_PATH__/assets/index.js"></script>"#;
         let rendered = inject_base_path(html, "/cross-seed");
         assert_eq!(
             String::from_utf8(rendered).unwrap(),
@@ -100,7 +100,7 @@ mod tests {
     /// absolute `/assets/...` URLs.
     #[test]
     fn an_empty_base_path_yields_root_relative_urls() {
-        let html = br#"<link href="/__CROSS_SEED_BASE_PATH__/assets/a.css">"#;
+        let html = br#"<link href="/__CRUST_SEED_BASE_PATH__/assets/a.css">"#;
         let rendered = inject_base_path(html, "");
         assert_eq!(
             String::from_utf8(rendered).unwrap(),

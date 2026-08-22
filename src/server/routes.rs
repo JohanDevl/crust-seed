@@ -1153,14 +1153,14 @@ pub fn dev_login_router() -> Router<AppState> {
 
 /// Exchanges a session id created by `crust-seed dev-login` for a cookie.
 ///
-/// Gated on `CROSS_SEED_DEV_LOGIN=true`, because it authenticates on the
+/// Gated on `CRUST_SEED_DEV_LOGIN=true`, because it authenticates on the
 /// strength of a URL alone.
 async fn dev_login(
     State(state): State<AppState>,
     Path(session_id): Path<String>,
     RawQuery(query): RawQuery,
 ) -> Response {
-    if std::env::var("CROSS_SEED_DEV_LOGIN").as_deref() != Ok("true") {
+    if std::env::var("CRUST_SEED_DEV_LOGIN").as_deref() != Ok("true") {
         return (StatusCode::NOT_FOUND, "Not Found").into_response();
     }
     let Ok(Some(_)) = validate_session(&state.pool, &session_id).await else {

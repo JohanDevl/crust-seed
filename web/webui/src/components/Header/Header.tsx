@@ -1,6 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
 import { ModeToggle } from "@/components/ModeToggle/ModeToggle";
-import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const getPageTitle = (pathname: string): string => {
@@ -17,7 +16,7 @@ const getPageTitle = (pathname: string): string => {
     case "/settings/general":
       return "Settings";
     default:
-      return "cross-seed";
+      return "crust-seed";
   }
 };
 
@@ -26,12 +25,13 @@ const Header = () => {
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
-      <SidebarTrigger className="-ml-1" />
-      <Separator orientation="vertical" className="mr-2 h-4" />
-      <h1 className="text-base font-medium">{pageTitle}</h1>
+    <header className="bg-background/85 supports-[backdrop-filter]:bg-background/65 border-border/70 sticky top-0 z-20 flex shrink-0 items-center gap-3 border-b px-4 py-3 backdrop-blur-md sm:px-6">
+      <SidebarTrigger className="text-muted-foreground hover:text-foreground -ml-1 size-8 rounded-lg" />
+      <h1 className="truncate text-lg leading-tight font-semibold">
+        {pageTitle}
+      </h1>
       <div className="ml-auto">
-        <ModeToggle />
+        <ModeToggle className="text-muted-foreground hover:text-foreground size-8 rounded-lg" />
       </div>
     </header>
   );

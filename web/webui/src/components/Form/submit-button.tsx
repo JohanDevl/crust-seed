@@ -18,18 +18,15 @@ function SubmitButton({ label, actionLabel, size = "md" }: SubmitButtonProps) {
         selector={(state) => [state.canSubmit, state.isSubmitting]}
       >
         {([canSubmit, isSubmitting]) => (
-          <div className="form__submit bg-background sticky right-0 bottom-0 left-0 w-full pt-4">
+          <div className="form__submit sticky right-0 bottom-0 left-0 z-10 w-full pt-6 pb-1">
             <Button
               type="submit"
-              className={cn(
-                "w-full rounded-md transition-colors duration-150",
-                {
-                  "opacity-70": isSubmitting,
-                  "px-4 py-6": size === "lg",
-                  "px-4 py-2": size === "md",
-                  "px-2 py-1": size === "sm",
-                },
-              )}
+              className={cn("w-full", {
+                "opacity-70": isSubmitting,
+                "h-12 text-base": size === "lg",
+                "h-10": size === "md",
+                "h-8 text-sm": size === "sm",
+              })}
               disabled={!canSubmit || isSubmitting}
             >
               {isSubmitting ? (

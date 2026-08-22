@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
-import Logo from "@/assets/cross-seed.svg";
 import {
   useMutation,
   useQuery,
@@ -15,7 +14,6 @@ import {
   FileText,
   Clock,
   Download,
-  // Workflow,
   Folders,
   Webhook,
   Popcorn,
@@ -24,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/brand/LogoMark";
 import {
   Sidebar,
   SidebarContent,
@@ -36,14 +35,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { useTRPC } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   {
-    title: "Main",
+    title: "Overview",
     items: [
       {
         title: "Dashboard",
@@ -198,47 +196,60 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader className="relative px-4 pt-3.5 pb-2">
-        <div className="flex items-center gap-2">
-          <img
-            src={Logo}
-            className="mt-1 h-4 w-4"
-            role="presentation"
-            alt="cross-seed logo"
-          />
-          <span className="text-xl font-bold">cross-seed</span>
-        </div>
-        {hasBuildInfo && (
-          <div className="text-muted-foreground mt-0.5 space-y-0.5 text-xs">
-            {primaryLine && (
-              <div
+      <SidebarHeader className="px-3 pt-3 pb-1">
+        <div className="flex items-center gap-2.5">
+          <span className="bg-card ring-sidebar-border/80 flex size-9 items-center justify-center rounded-xl shadow-xs ring-1">
+            <LogoMark className="size-5" />
+          </span>
+          <span className="flex min-w-0 flex-col leading-none">
+            <span className="text-[0.95rem] font-semibold tracking-tight">
+              crust<span className="text-primary">-seed</span>
+            </span>
+            {hasBuildInfo && primaryLine && (
+              <span
+                className="text-muted-foreground mt-1 truncate text-[0.68rem]"
                 title={
                   preferCommitInfo || isSourceBuild ? commitMessage : undefined
                 }
               >
                 {primaryLine}
-              </div>
+              </span>
             )}
-            {secondaryLine && (
-              <div
-                className={preferCommitInfo ? "opacity-70" : "truncate"}
-                title={!preferCommitInfo ? commitMessage : undefined}
-              >
-                {secondaryLine}
-              </div>
+          </span>
+        </div>
+        {hasBuildInfo && secondaryLine && (
+          <div
+            className={cn(
+              "text-muted-foreground/80 mt-1.5 truncate pl-0.5 text-[0.68rem]",
+              preferCommitInfo && "opacity-70",
             )}
+            title={!preferCommitInfo ? commitMessage : undefined}
+          >
+            {secondaryLine}
           </div>
         )}
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent className="px-1.5">
         {navItems.map((section) => (
-          <SidebarGroup key={section.title}>
-            <SidebarGroupLabel>{section.title}</SidebarGroupLabel>
+          <SidebarGroup key={section.title} className="py-1">
+            <SidebarGroupLabel className="eyebrow h-6 px-2">
+              {section.title}
+            </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-0.5">
                 {section.items.map((item) => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.title}
+                      className={cn(
+                        "h-9 rounded-lg px-2.5 font-medium",
+                        "[&>svg]:text-muted-foreground [&>svg]:transition-colors",
+                        "hover:[&>svg]:text-foreground",
+                        "data-[active=true]:[&>svg]:text-primary data-[active=true]:shadow-xs",
+                      )}
+                    >
                       <Link
                         to={item.url}
                         activeProps={{
@@ -251,10 +262,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         {item.title === "Health" && healthStatus && (
                           <span
                             className={cn(
-                              "ml-auto size-2 rounded-full",
+                              "ml-auto size-2 rounded-full ring-2",
                               healthStatus === "error"
-                                ? "bg-destructive"
-                                : "bg-amber-500",
+                                ? "bg-destructive ring-destructive/25"
+                                : "bg-warning ring-warning/25",
                             )}
                             aria-label={`Health has ${healthStatus}s`}
                           />
@@ -269,17 +280,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter>
-        <SidebarSeparator className="mx-0" />
+      <SidebarFooter className="p-2">
         {authStatus?.isLoggedIn && (
-          <div className="flex items-center justify-between py-2">
-            <div className="text-sm font-medium">
+          <div className="bg-sidebar-accent/40 ring-sidebar-border/70 flex items-center gap-2.5 rounded-xl p-2 ring-1">
+            <span className="bg-primary text-primary-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold uppercase">
+              {authStatus.user?.username?.charAt(0) ?? "?"}
+            </span>
+            <div className="min-w-0 flex-1 truncate text-sm font-medium">
               {authStatus.user?.username}
             </div>
             <Button
               variant="ghost"
               size="icon"
-              className="size-8"
+              className="text-muted-foreground hover:text-foreground size-7 rounded-lg"
               onClick={() => logout()}
               title="Logout"
             >

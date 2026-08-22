@@ -223,7 +223,7 @@ pub async fn check_api_key(pool: &SqlitePool, key_to_check: &str) -> bool {
 
 /// A development login URL, printed by `crust-seed dev-login`.
 ///
-/// Only usable when the daemon runs with `CROSS_SEED_DEV_LOGIN=true`.
+/// Only usable when the daemon runs with `CRUST_SEED_DEV_LOGIN=true`.
 pub async fn create_dev_login(
     pool: &SqlitePool,
     username: &str,

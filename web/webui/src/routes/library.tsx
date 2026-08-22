@@ -190,13 +190,10 @@ function LibraryPage() {
   return (
     <Page>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Library</h1>
-          <p className="text-muted-foreground text-sm">
-            Showing {rangeStart}-{rangeEnd} of {data.total} items
-          </p>
-        </div>
-        <div className="bg-muted/30 text-muted-foreground flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm lg:flex-row lg:items-center lg:gap-4">
+        <p className="text-muted-foreground numeric -mt-1 text-sm">
+          Showing {rangeStart}-{rangeEnd} of {data.total} items
+        </p>
+        <div className="bg-card ring-border/70 text-muted-foreground flex flex-col gap-2 rounded-xl px-3 py-2 text-sm shadow-sm ring-1 lg:flex-row lg:items-center lg:gap-4">
           <div className="flex items-center gap-2">
             <span>
               {selectedCount > 0
@@ -298,10 +295,10 @@ function LibraryPage() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="bg-card ring-border/70 overflow-x-auto rounded-2xl shadow-sm ring-1">
         <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
-            <TableRow className="border-b">
+          <TableHeader className="bg-muted/95 sticky top-0 z-10 backdrop-blur">
+            <TableRow>
               <TableHead className="w-10">
                 <Checkbox
                   aria-label="Select all items on this page"

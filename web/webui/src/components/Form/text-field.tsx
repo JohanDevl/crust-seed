@@ -34,9 +34,12 @@ const TextField: FC<TextFieldProps> = ({
   const { isFieldRequired } = useFormValidation();
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-2", className)}>
       {!hideLabel && (
-        <Label htmlFor={field.name} className="block w-full">
+        <Label
+          htmlFor={field.name}
+          className="text-foreground/90 block w-full text-sm font-medium"
+        >
           {label}
           {isFieldRequired(field.name) && <RequiredIndicator />}
         </Label>

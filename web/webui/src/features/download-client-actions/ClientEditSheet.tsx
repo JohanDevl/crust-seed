@@ -304,7 +304,8 @@ export default function ClientEditSheet({
                       passwordValue === undefined
                         ? true
                         : passwordValue && !passwordMeta?.errors?.length) &&
-                      (clientValue === "deluge" || clientValue === "transmission"
+                      (clientValue === "deluge" ||
+                      clientValue === "transmission"
                         ? true
                         : userValue && !userMeta?.errors?.length);
 
@@ -336,7 +337,7 @@ export default function ClientEditSheet({
                         <p className="text-muted-foreground -mt-4 px-2 text-sm italic">
                           Note: Testing connections can return false positives
                           if{" "}
-                          <code className="bg-yellow-100 px-1">
+                          <code className="bg-warning/15 text-warning rounded px-1 font-mono">
                             Bypass auth on localhost
                           </code>{" "}
                           is enabled in qBittorrent.

@@ -51,16 +51,12 @@ function RouteComponent() {
 
   const getStatusBadge = (job: (typeof jobs)[number]) => {
     if (job.isActive) {
-      return (
-        <Badge variant="default" className="bg-blue-500">
-          Running
-        </Badge>
-      );
+      return <Badge variant="info">Running</Badge>;
     }
     if (job.nextExecution === "now") {
-      return <Badge variant="secondary">Ready</Badge>;
+      return <Badge variant="success">Ready</Badge>;
     }
-    return <Badge variant="outline">Scheduled</Badge>;
+    return <Badge variant="muted">Scheduled</Badge>;
   };
 
   const formatJobName = (name: string) => {
@@ -72,10 +68,10 @@ function RouteComponent() {
 
   return (
     <Page>
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="bg-card ring-border/70 overflow-hidden rounded-2xl shadow-sm ring-1">
         <Table>
-          <TableHeader className="bg-muted sticky top-0 z-10">
-            <TableRow className="border-b">
+          <TableHeader className="bg-muted/95 sticky top-0 z-10 backdrop-blur">
+            <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Interval</TableHead>
               <TableHead>Last Execution</TableHead>
@@ -111,7 +107,7 @@ function RouteComponent() {
                   >
                     {triggeredJobs.has(job.name) ? (
                       <>
-                        <Check className="mr-1 h-4 w-4 text-green-600" />
+                        <Check className="text-success mr-1 size-4" />
                         Started
                       </>
                     ) : (

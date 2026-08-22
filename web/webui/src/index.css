@@ -1,15 +1,47 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@source "../components";
-
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * crust-seed — "Kiln"
+ *
+ * A warm, layered palette built around the rust of the logo. Three surface
+ * levels do the structural work — canvas (sidebar), page (inset) and card —
+ * so panels read as stacked paper instead of boxes drawn with borders.
+ *
+ * Status colours are tokens rather than raw Tailwind palette classes. The
+ * primary is an orange, which sits uncomfortably close to a red "error" if
+ * both are picked by eye, so error / warning / success / info are pinned to
+ * hues that stay apart in both schemes: 22 / 82 / 155 / 250 against a primary
+ * at 42.
+ */
+
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+
+  --radius-sm: calc(var(--radius) - 0.4rem);
+  --radius-md: calc(var(--radius) - 0.2rem);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) + 0.3rem);
+  --radius-2xl: calc(var(--radius) + 0.7rem);
+
+  /* Warm-tinted elevation. Neutral grey shadows go muddy on a sand canvas. */
+  --shadow-2xs: 0 1px 2px 0 var(--shade-weak);
+  --shadow-xs: 0 1px 2px 0 var(--shade-weak), 0 1px 1px -1px var(--shade-weak);
+  --shadow-sm: 0 1px 2px 0 var(--shade-weak), 0 2px 6px -2px var(--shade-soft);
+  --shadow-md:
+    0 2px 4px -1px var(--shade-weak), 0 6px 14px -4px var(--shade-soft);
+  --shadow-lg:
+    0 4px 8px -2px var(--shade-weak), 0 14px 32px -8px var(--shade-soft);
+  --shadow-xl:
+    0 8px 16px -4px var(--shade-soft), 0 28px 56px -16px var(--shade-strong);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -25,9 +57,18 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand-shell: var(--brand-shell);
+  --color-brand-core: var(--brand-core);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -45,78 +86,165 @@
 
 @layer base {
   :root {
-    --radius: 0.625rem;
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
+    --radius: 0.8rem;
+
+    /* The logo's two tones, so accents can quote the mark directly. */
+    --brand-shell: oklch(0.615 0.178 40);
+    --brand-core: oklch(0.787 0.147 73);
+
+    --shade-weak: oklch(0.3 0.04 50 / 6%);
+    --shade-soft: oklch(0.3 0.04 50 / 9%);
+    --shade-strong: oklch(0.3 0.04 50 / 14%);
+
+    --background: oklch(0.988 0.004 75);
+    --foreground: oklch(0.22 0.015 55);
     --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
+    --card-foreground: oklch(0.22 0.015 55);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.61 0.156 146.9);
+    --popover-foreground: oklch(0.22 0.015 55);
+
+    /* L=0.585 is the darkest rust that still reads as the logo colour and
+       clears 4.5:1 against white button text. Lighter shades do not. */
+    --primary: oklch(0.585 0.176 42);
     --primary-foreground: oklch(1 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    --secondary: oklch(0.955 0.009 72);
+    --secondary-foreground: oklch(0.28 0.018 52);
+    --muted: oklch(0.958 0.008 72);
+    --muted-foreground: oklch(0.5 0.016 60);
+    --accent: oklch(0.945 0.022 62);
+    --accent-foreground: oklch(0.3 0.045 45);
+
+    --destructive: oklch(0.55 0.215 22);
+    --destructive-foreground: oklch(1 0 0);
+    --success: oklch(0.6 0.13 155);
+    --success-foreground: oklch(1 0 0);
+    --warning: oklch(0.76 0.15 82);
+    --warning-foreground: oklch(0.26 0.05 70);
+    --info: oklch(0.58 0.14 250);
+    --info-foreground: oklch(1 0 0);
+
+    --border: oklch(0.905 0.01 70);
+    --input: oklch(0.9 0.011 70);
+    --ring: oklch(0.585 0.176 42);
+
+    --chart-1: oklch(0.585 0.176 42);
+    --chart-2: oklch(0.72 0.14 60);
+    --chart-3: oklch(0.6 0.13 155);
+    --chart-4: oklch(0.58 0.14 250);
+    --chart-5: oklch(0.55 0.19 340);
+
+    --sidebar: oklch(0.945 0.012 74);
+    --sidebar-foreground: oklch(0.26 0.017 55);
+    --sidebar-primary: oklch(0.585 0.176 42);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    --sidebar-accent: oklch(0.905 0.03 62);
+    --sidebar-accent-foreground: oklch(0.33 0.09 43);
+    --sidebar-border: oklch(0.885 0.014 70);
+    --sidebar-ring: oklch(0.585 0.176 42);
   }
 
   .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.61 0.156 146.9);
-    --primary-foreground: oklch(1 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --brand-shell: oklch(0.66 0.17 42);
+    --brand-core: oklch(0.81 0.145 74);
+
+    --shade-weak: oklch(0 0 0 / 30%);
+    --shade-soft: oklch(0 0 0 / 40%);
+    --shade-strong: oklch(0 0 0 / 55%);
+
+    --background: oklch(0.185 0.012 55);
+    --foreground: oklch(0.965 0.005 75);
+    --card: oklch(0.252 0.015 55);
+    --card-foreground: oklch(0.965 0.005 75);
+    --popover: oklch(0.252 0.015 55);
+    --popover-foreground: oklch(0.965 0.005 75);
+
+    /* Brighter rust on a dark canvas, so the foreground flips to near-black
+       — white on this orange is only 3.3:1. */
+    --primary: oklch(0.665 0.17 44);
+    --primary-foreground: oklch(0.19 0.02 45);
+    --secondary: oklch(0.288 0.013 55);
+    --secondary-foreground: oklch(0.955 0.006 75);
+    --muted: oklch(0.288 0.013 55);
+    --muted-foreground: oklch(0.72 0.018 65);
+    --accent: oklch(0.315 0.028 50);
+    --accent-foreground: oklch(0.955 0.01 70);
+
+    --destructive: oklch(0.68 0.19 22);
+    --destructive-foreground: oklch(0.16 0.03 25);
+    --success: oklch(0.72 0.14 158);
+    --success-foreground: oklch(0.17 0.03 158);
+    --warning: oklch(0.8 0.15 82);
+    --warning-foreground: oklch(0.2 0.04 70);
+    --info: oklch(0.7 0.13 250);
+    --info-foreground: oklch(0.16 0.03 250);
+
+    --border: oklch(0.98 0.02 70 / 14%);
+    --input: oklch(0.98 0.02 70 / 15%);
+    --ring: oklch(0.665 0.17 44);
+
+    --chart-1: oklch(0.665 0.17 44);
+    --chart-2: oklch(0.81 0.145 74);
+    --chart-3: oklch(0.72 0.14 158);
+    --chart-4: oklch(0.7 0.13 250);
+    --chart-5: oklch(0.68 0.17 340);
+
+    --sidebar: oklch(0.155 0.011 55);
+    --sidebar-foreground: oklch(0.9 0.008 70);
+    --sidebar-primary: oklch(0.665 0.17 44);
+    --sidebar-primary-foreground: oklch(0.19 0.02 45);
+    --sidebar-accent: oklch(0.3 0.045 45);
+    --sidebar-accent-foreground: oklch(0.9 0.06 70);
+    --sidebar-border: oklch(0.98 0.02 70 / 9%);
+    --sidebar-ring: oklch(0.665 0.17 44);
   }
 
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
   }
+
+  /*
+   * The canvas the inset layout floats on. Styled here rather than in
+   * sidebar.tsx so the vendored shadcn component keeps its upstream shape.
+   */
+  [data-slot="sidebar-wrapper"] {
+    background-image:
+      radial-gradient(
+        900px 520px at 8% -8%,
+        color-mix(in oklab, var(--brand-shell) 14%, transparent),
+        transparent 62%
+      ),
+      radial-gradient(
+        760px 460px at 96% 4%,
+        color-mix(in oklab, var(--brand-core) 12%, transparent),
+        transparent 58%
+      );
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+}
+
+/* Digits that do not jitter as a stat refreshes. */
+@utility numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Section heading above a group of panels. */
+@utility eyebrow {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }

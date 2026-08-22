@@ -25,7 +25,7 @@ createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
-        <ThemeProvider defaultTheme="system" storageKey="cross-seed-ui-theme">
+        <ThemeProvider defaultTheme="system" storageKey="crust-seed-ui-theme">
           <RouterProvider router={router} />
           <Toaster position="top-right" expand={true} richColors />
         </ThemeProvider>

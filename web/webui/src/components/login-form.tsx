@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/brand/LogoMark";
 import {
   Card,
   CardContent,
@@ -58,54 +59,62 @@ export function LoginForm({
   const signupAllowed = authStatus.signupAllowed;
   const isDocker = authStatus.isDocker;
   const resetCommand = isDocker
-    ? "docker exec -it <container> cross-seed reset-user"
-    : "cross-seed reset-user";
+    ? "docker exec -it <container> crust-seed reset-user"
+    : "crust-seed reset-user";
+  const disabled = isPending || (isSignUp && !signupAllowed);
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card>
+      <div className="flex flex-col items-center gap-3 text-center">
+        <span className="bg-card ring-border/70 flex size-14 items-center justify-center rounded-2xl shadow-md ring-1">
+          <LogoMark className="size-8" />
+        </span>
+        <span className="text-2xl font-semibold tracking-tight">
+          crust<span className="text-primary">-seed</span>
+        </span>
+      </div>
+
+      <Card className="shadow-xl">
         <CardHeader>
-          <CardTitle>
-            {isSignUp ? "Initial Setup" : "Login to your account"}
-          </CardTitle>
+          <CardTitle>{isSignUp ? "Initial setup" : "Welcome back"}</CardTitle>
           <CardDescription>
             {isSignUp
-              ? "Create a user"
-              : "Enter your username and password to access your account"}
+              ? "Create the account you will use to manage this instance."
+              : "Sign in to manage indexers, clients and cross-seeding."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-5">
               {isSignUp && signupAllowed && (
-                <p className="text-muted-foreground text-sm">
+                <p className="bg-info/10 text-info border-info/20 rounded-lg border px-3 py-2 text-sm">
                   For security reasons, initial setup is only available for 5
-                  minutes after cross-seed starts.
+                  minutes after crust-seed starts.
                 </p>
               )}
               {isSignUp && !signupAllowed && (
-                <p className="text-destructive text-sm font-medium">
-                  Setup window closed for security reasons. Restart cross-seed
+                <p className="bg-destructive/10 text-destructive border-destructive/20 rounded-lg border px-3 py-2 text-sm font-medium">
+                  Setup window closed for security reasons. Restart crust-seed
                   to create the first user.
                 </p>
               )}
               {error && (
-                <div className="text-destructive text-sm font-medium">
+                <div className="bg-destructive/10 text-destructive border-destructive/20 rounded-lg border px-3 py-2 text-sm font-medium">
                   {error}
                 </div>
               )}
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 <Label htmlFor="username">Username</Label>
                 <Input
                   id="username"
                   placeholder="admin"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  disabled={isPending || (isSignUp && !signupAllowed)}
+                  disabled={disabled}
                   required
                 />
               </div>
-              <div className="grid gap-3">
+              <div className="grid gap-2">
                 <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
@@ -113,24 +122,28 @@ export function LoginForm({
                   placeholder="••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isPending || (isSignUp && !signupAllowed)}
+                  disabled={disabled}
                   required
                 />
               </div>
               <Button
                 type="submit"
-                disabled={isPending || (isSignUp && !signupAllowed)}
+                size="lg"
+                disabled={disabled}
                 className="w-full"
               >
                 {isPending
                   ? "Processing..."
                   : isSignUp
-                    ? "Create Account"
-                    : "Login"}
+                    ? "Create account"
+                    : "Sign in"}
               </Button>
               {!isSignUp && (
-                <p className="text-muted-foreground text-sm">
-                  Forgot password? Run <code>{resetCommand}</code> .
+                <p className="text-muted-foreground text-center text-xs">
+                  Forgot your password? Run{" "}
+                  <code className="bg-muted text-foreground rounded px-1.5 py-0.5 font-mono text-[0.7rem]">
+                    {resetCommand}
+                  </code>
                 </p>
               )}
             </div>
