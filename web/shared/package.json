@@ -1,0 +1,34 @@
+{
+	"name": "@cross-seed/shared",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./constants": {
+			"default": "./dist/constants.js"
+		},
+		"./configSchema": {
+			"default": "./dist/configSchema.js"
+		},
+		"./utils": {
+			"default": "./dist/utils.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -b tsconfig.build.json",
+		"coverage": "vitest run --coverage",
+		"lint": "eslint .",
+		"test": "vitest",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"vitest": "^4.1.11"
+	}
+}

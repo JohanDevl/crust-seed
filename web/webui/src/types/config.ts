@@ -1,0 +1,144 @@
+import { z } from "zod";
+import {
+  Action,
+  LinkType,
+  ZodErrorMessages,
+} from "@cross-seed/shared/constants";
+import { RUNTIME_CONFIG_SCHEMA } from "@cross-seed/shared/configSchema";
+
+const runtimeShape = RUNTIME_CONFIG_SCHEMA.shape;
+
+function parseJsonOrUndefined(val: string): unknown {
+  try {
+    return JSON.parse(val);
+  } catch {
+    return undefined;
+  }
+}
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+// Optional string that, when non-empty, must be a JSON object — used for
+// custom webhook payloads. Rejects arrays/primitives so the error surfaces
+// in the form instead of as an opaque server-side failure.
+const optionalJsonObjectString = z.string().refine(
+  (val) => {
+    if (!val) return true;
+    return isPlainObject(parseJsonOrUndefined(val));
+  },
+  { message: "Must be a valid JSON object" },
+);
+
+// Optional string that, when non-empty, must be a JSON object whose values
+// are all strings — used for custom webhook headers.
+const optionalJsonHeadersString = z.string().refine(
+  (val) => {
+    if (!val) return true;
+    const parsed = parseJsonOrUndefined(val);
+    return (
+      isPlainObject(parsed) &&
+      Object.values(parsed).every((v) => typeof v === "string")
+    );
+  },
+  { message: "Must be a JSON object with string values" },
+);
+
+export const generalValidationSchema = z.object({
+  includeSingleEpisodes: runtimeShape.includeSingleEpisodes,
+  includeNonVideos: runtimeShape.includeNonVideos,
+  blockList: runtimeShape.blockList,
+  snatchTimeout: runtimeShape.snatchTimeout.nullish(),
+  autoResumeMaxDownload: runtimeShape.autoResumeMaxDownload,
+  fuzzySizeThreshold: runtimeShape.fuzzySizeThreshold,
+  seasonFromEpisodes: runtimeShape.seasonFromEpisodes.nullish(),
+  ignoreNonRelevantFilesToResume:
+    runtimeShape.ignoreNonRelevantFilesToResume.nullish(),
+});
+
+export const trackerValidationSchema = z.object({
+  torznab: z.array(z.string().url()),
+});
+
+export const clientValidationSchema = z.object({
+  client: z.string().min(1, ZodErrorMessages.emptyString),
+  url: z.string().url(),
+  user: z.string().nullish(),
+  password: z.string().nullish(),
+  readOnly: z
+    .boolean()
+    .optional()
+    .default(false)
+    .or(z.null().transform(() => false)),
+});
+
+export const downloaderValidationSchema = z.object({
+  action: z.nativeEnum(Action),
+  duplicateCategories: z.boolean(),
+  useClientTorrents: z.boolean(),
+  linkCategory: z.string().nullish(),
+  skipRecheck: z.boolean(),
+  torrentDir: z
+    .string()
+    .nullish()
+    .transform((value) =>
+      value == null || value.trim() === "" ? null : value,
+    ),
+  outputDir: z.string().min(1, ZodErrorMessages.emptyString),
+  injectDir: z.string().optional(),
+});
+
+export const searchValidationSchema = z.object({
+  delay: runtimeShape.delay,
+  matchMode: runtimeShape.matchMode,
+  rssCadence: runtimeShape.rssCadence.nullish(),
+  searchCadence: runtimeShape.searchCadence.nullish(),
+  searchTimeout: runtimeShape.searchTimeout.nullish(),
+  searchLimit: runtimeShape.searchLimit.nullish(),
+  excludeOlder: runtimeShape.excludeOlder.nullish(),
+  excludeRecentSearch: runtimeShape.excludeRecentSearch.nullish(),
+});
+
+export const connectValidationSchema = z.object({
+  host: runtimeShape.host.nullish(),
+  port: runtimeShape.port.nullish(),
+  apiKey: runtimeShape.apiKey.nullish(),
+  radarr: z.array(z.string().url().or(z.literal(""))).transform((v) => v ?? []),
+  sonarr: z.array(z.string().url().or(z.literal(""))).transform((v) => v ?? []),
+  notificationWebhookUrls: z.array(
+    z.object({
+      url: z.string().url().or(z.literal("")),
+      payload: optionalJsonObjectString,
+      headers: optionalJsonHeadersString,
+      advancedOpen: z.boolean(),
+    }),
+  ),
+});
+
+export const directoryValidationSchema = z.object({
+  dataDirs: z.array(z.string()).transform((v) => v ?? []),
+  flatLinking: z
+    .boolean()
+    .transform((v) => (typeof v === "boolean" ? v : false)),
+  linkDir: z.string().nullish(),
+  linkDirs: z.array(z.string()),
+  linkType: z.nativeEnum(LinkType),
+  maxDataDepth: z
+    .number()
+    .gte(1)
+    .refine((maxDataDepth) => {
+      if (maxDataDepth > 3) {
+        console.error(
+          `Your maxDataDepth is most likely incorrect, please read: https://www.cross-seed.org/docs/tutorials/data-based-matching#setting-up-data-based-matching`,
+        );
+      }
+      return true;
+    }),
+});
+
+export const baseValidationSchema = z.object({
+  verbose: runtimeShape.verbose,
+  torrents: runtimeShape.torrents.optional(),
+});
+
+export type Config = z.infer<typeof baseValidationSchema>;

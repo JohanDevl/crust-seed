@@ -1,0 +1,16 @@
+# cargo-deny configuration — consumed by the `audit` CI workflow.
+#
+# Scope is advisories + bans only: crust-seed terminates TLS, parses
+# attacker-influenced XML/bencode/JSON coming from third-party indexers and
+# torrent clients, and serves an authenticated HTTP API. An undetected
+# transitive RUSTSEC advisory is the most probable real-world exposure.
+# License auditing is intentionally out of scope for a self-hosted app.
+
+[advisories]
+version = 2
+ignore = []
+
+[bans]
+# Duplicate crate versions are normal in a graph this size (axum + reqwest +
+# sqlx each pull their own middleware stack); surface them, never fail on them.
+multiple-versions = "warn"

@@ -1,0 +1,24 @@
+{
+	"name": "crust-seed-web",
+	"version": "0.0.0",
+	"description": "Vendored cross-seed web UI, built into the crust-seed binary",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"shared",
+		"api-types",
+		"webui"
+	],
+	"scripts": {
+		"build": "npm -w @cross-seed/shared run build && npm -w @cross-seed/api-types run build && npm -w webui run build",
+		"dev": "npm -w webui run dev",
+		"typecheck": "npm --workspaces run typecheck --if-present",
+		"lint": "npm --workspaces run lint --if-present",
+		"generate:routes": "node scripts/generate-route-tree.js"
+	},
+	"devDependencies": {
+		"@tanstack/router-generator": "^1.166.14",
+		"@types/node": "^25.9.5",
+		"typescript": "^5.9.3"
+	}
+}

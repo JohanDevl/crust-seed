@@ -1,0 +1,112 @@
+[package]
+name = "crust-seed"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+description = "Fully-automatic cross-seeding with Torznab — a Rust rewrite of cross-seed"
+license = "Apache-2.0"
+repository = "https://github.com/JohanDevl/crust-seed"
+
+[[bin]]
+name = "crust-seed"
+path = "src/main.rs"
+
+[dependencies]
+# ─── Async runtime ──────────────────────────────────────────────────────────
+tokio = { version = "1", features = ["full"] }
+tokio-util = { version = "0.7", features = ["io"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# ─── HTTP server ────────────────────────────────────────────────────────────
+# axum replaces fastify: the tRPC endpoint, the legacy REST API, the static
+# web-UI plugin and the SSE subscription stream all hang off one router.
+axum = { version = "0.8", features = ["macros", "query", "json"] }
+axum-extra = { version = "0.10", features = ["cookie", "typed-header"] }
+tower = "0.5"
+tower-http = { version = "0.7", features = ["cors", "trace", "set-header"] }
+http = "1"
+mime_guess = "2"
+# The React SPA is compiled by a Node stage and baked into the binary, so the
+# runtime image needs no asset directory (mirrors fastify-static + copy-webui).
+rust-embed = { version = "8", features = ["interpolate-folder-path"] }
+
+# ─── HTTP client ────────────────────────────────────────────────────────────
+# rustls avoids the openssl toolchain in the Docker builder.
+reqwest = { version = "0.13", default-features = false, features = [
+    "json",
+    "rustls",
+    "gzip",
+    "stream",
+    "multipart",
+    "cookies",
+] }
+
+# ─── Persistence ────────────────────────────────────────────────────────────
+# SQLite via sqlx replaces better-sqlite3 + knex. Migrations live in
+# ./migrations and are embedded at compile time.
+sqlx = { version = "0.8", default-features = false, features = [
+    "runtime-tokio-rustls",
+    "sqlite",
+    "macros",
+    "migrate",
+    "chrono",
+    "json",
+] }
+
+# ─── Serialization ──────────────────────────────────────────────────────────
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+serde_bencode = "0.2"
+serde_bytes = "0.11"
+quick-xml = { version = "0.41", features = ["serialize"] }
+toml = "1"
+
+# ─── Logging ────────────────────────────────────────────────────────────────
+# tracing + a daily-rotating file appender reproduces winston +
+# winston-daily-rotate-file (logs/ under the config dir, readable from the host).
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "local-time"] }
+tracing-appender = "0.2"
+
+# ─── Errors ─────────────────────────────────────────────────────────────────
+anyhow = "1"
+thiserror = "2"
+
+# ─── CLI ────────────────────────────────────────────────────────────────────
+clap = { version = "4", features = ["derive", "env", "wrap_help"] }
+owo-colors = "4"
+
+# ─── Domain helpers ─────────────────────────────────────────────────────────
+regex = "1"
+fancy-regex = "0.19"    # lookaround/backreference support the release-name regexes need
+strsim = "0.11"         # Levenshtein distance (fastest-levenshtein)
+chrono = { version = "0.4", features = ["serde"] }
+url = "2"
+percent-encoding = "2"
+sha1 = "0.11"
+sha2 = "0.11"
+hex = "0.4"
+base64 = "0.23"
+bcrypt = "0.19"
+rand = "0.10"
+uuid = { version = "1", features = ["v4"] }
+walkdir = "2"
+dirs = "6"
+unicode-normalization = "0.1"
+dashmap = "6"
+parking_lot = "0.12"
+notify = { version = "8", default-features = false, features = ["macos_fsevent"] }
+dxr = "0.8"
+dxr_client = { version = "0.8", features = ["reqwest"] }
+
+[dev-dependencies]
+pretty_assertions = "1"
+tempfile = "3"
+tokio = { version = "1", features = ["test-util", "macros", "rt-multi-thread"] }
+wiremock = "0.6"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1

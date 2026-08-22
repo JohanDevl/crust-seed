@@ -1,0 +1,32 @@
+# Build artefacts — never ship the host's target/ into the build context.
+/target
+node_modules
+web/**/node_modules
+web/**/dist
+
+# Runtime data
+/config
+/data
+*.db
+*.sqlite*
+logs/
+torrent_cache/
+
+# VCS / CI / docs
+.git
+.github
+docs
+*.md
+
+# Agent + editor noise
+.claude
+.agents
+.codex
+.cursor
+.idea
+.vscode
+.DS_Store
+
+# Local env
+.env
+.env.*

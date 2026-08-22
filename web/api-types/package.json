@@ -1,0 +1,25 @@
+{
+	"name": "@cross-seed/api-types",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"default": "./dist/index.d.ts"
+		},
+		"./package.json": "./package.json"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -b tsconfig.build.json",
+		"typecheck": "tsc -b tsconfig.json --force"
+	},
+	"dependencies": {
+		"@cross-seed/shared": "file:../shared",
+		"@trpc/server": "^11.13.4",
+		"zod": "^4.3.6"
+	}
+}
