@@ -16,10 +16,10 @@
 #   The Cargo registry and the build target/ live in BuildKit cache mounts that
 #   survive between builds AND between layers.
 #
-# Difference from a plain Rust service: crust-seed serves the cross-seed web UI,
-# which is React. The SPA is compiled by the Node stage and embedded into the
-# binary (rust-embed), so the runtime image stays a single static-ish binary on
-# distroless — no Node, no asset directory, no static-file mount.
+# Difference from a plain Rust service: crust-seed serves a React web UI. The
+# SPA is compiled by the Node stage and embedded into the binary (rust-embed),
+# so the runtime image stays a single static-ish binary on distroless — no
+# Node, no asset directory, no static-file mount.
 
 # ─── Stage 1: web UI ─────────────────────────────────────────────────────────
 FROM node:26-alpine AS webui
