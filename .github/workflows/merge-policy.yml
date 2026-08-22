@@ -1,0 +1,34 @@
+name: Merge policy
+
+# A ruleset can require a pull request, but it cannot say where that pull
+# request may come from. main is only ever advanced by develop: releases are
+# cut from one integration branch, so a branch merged straight into main would
+# ship code that develop has never built or published as :develop.
+#
+# This job is that missing rule, wired in as a required status check on main.
+# It deliberately carries no path filters — a required check that never runs
+# leaves the pull request stuck on "Expected" forever.
+on:
+  pull_request:
+    branches: [main]
+    # `edited` covers a pull request being retargeted at main after it was
+    # opened against something else.
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  source-branch:
+    name: Source branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only develop may be merged into main
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" != "develop" ]; then
+            echo "::error::Pull requests into main must come from develop; this one comes from '$HEAD_REF'. Merge it into develop first."
+            exit 1
+          fi
+          echo "Head branch is develop."
