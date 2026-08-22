@@ -11,6 +11,10 @@
 //!   `content_path` versus `save_path`.
 //! * **Session cookies.** The API answers 403 when the SID expires; every
 //!   request retries through a re-login rather than failing the job.
+//!
+//! qBittorrent 5.2 added stateless API keys, which cross-seed does not support.
+//! A URL whose userinfo is a bare `qbt_…` key uses them instead of the cookie
+//! flow — see [`api_key_from`].
 
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
@@ -125,6 +129,9 @@ struct Version {
 
 pub struct QBittorrent {
     url: UrlCredentials,
+    /// `Some` when the URL carried an API key instead of a password, in which
+    /// case no session is ever established.
+    api_key: Option<String>,
     client_host: String,
     client_priority: usize,
     readonly: bool,
@@ -145,9 +152,11 @@ impl QBittorrent {
             CrustSeedError::new(format!("[{label}] qBittorrent url must be percent-encoded"))
         })?;
         let http = cookie_client().map_err(|e| CrustSeedError::new(format!("[{label}] {e}")))?;
+        let api_key = api_key_from(&credentials);
 
         Ok(QBittorrent {
             url: credentials,
+            api_key,
             client_host,
             client_priority: priority,
             readonly,
@@ -163,6 +172,11 @@ impl QBittorrent {
     /// [`QBittorrent::request`] can re-authenticate without recursing back
     /// through the version probe (which itself goes through `request`).
     async fn authenticate(&self) -> Result<(), CrustSeedError> {
+        // API keys are rejected by `/auth/login` by design — they exist so a
+        // client never holds a session. There is nothing to establish here.
+        if self.api_key.is_some() {
+            return Ok(());
+        }
         let response = self
             .http
             .post(format!("{}/auth/login", self.url.href))
@@ -193,6 +207,15 @@ impl QBittorrent {
         Ok(())
     }
 
+    /// Attaches the API key, if one is configured. Cookie auth needs nothing
+    /// here: `cookie_client` replays the SID on its own.
+    fn authorized(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
+        match &self.api_key {
+            Some(key) => request.bearer_auth(key),
+            None => request,
+        }
+    }
+
     pub async fn login(&self) -> Result<(), CrustSeedError> {
         self.authenticate().await?;
 
@@ -218,11 +241,25 @@ impl QBittorrent {
                 version.trim()
             )));
         }
+        // API keys landed in qBittorrent 5.2.0 (WebAPI 2.14.1). Against an
+        // older server every request would simply 403, which reads as a wrong
+        // key rather than an unsupported one.
+        if self.api_key.is_some() && (parsed.major < 5 || (parsed.major == 5 && parsed.minor < 2)) {
+            return Err(CrustSeedError::new(format!(
+                "qBittorrent API key authentication requires v5.2.0, current version is {}",
+                version.trim()
+            )));
+        }
         *self.version.write().await = parsed;
 
         tracing::info!(
             label = self.label.as_str(),
-            "Logged in to {} successfully{}",
+            "{} {} successfully{}",
+            if self.api_key.is_some() {
+                "Connected to"
+            } else {
+                "Logged in to"
+            },
             version.trim(),
             if self.readonly { " (readonly)" } else { "" }
         );
@@ -250,10 +287,11 @@ impl QBittorrent {
     async fn request(&self, path: &str, body: RequestBody) -> Option<String> {
         const RETRIES: u32 = 3;
         for attempt in 0..=RETRIES {
-            let request = self
-                .http
-                .post(format!("{}{path}", self.url.href))
-                .timeout(std::time::Duration::from_secs(600));
+            let request = self.authorized(
+                self.http
+                    .post(format!("{}{path}", self.url.href))
+                    .timeout(std::time::Duration::from_secs(600)),
+            );
             let request = match &body {
                 RequestBody::Form(form) => request
                     .header(reqwest::header::CONTENT_TYPE, FORM_URLENCODED)
@@ -264,7 +302,9 @@ impl QBittorrent {
             match request.send().await {
                 Ok(response) => {
                     let status = response.status().as_u16();
-                    if status == 403 && attempt < RETRIES {
+                    // A 403 under an API key means the key is wrong, not that
+                    // a session lapsed, so retrying would only delay the error.
+                    if status == 403 && attempt < RETRIES && self.api_key.is_none() {
                         tracing::debug!(
                             label = self.label.as_str(),
                             "Received 403 from API, re-authenticating and retrying"
@@ -561,10 +601,12 @@ impl QBittorrent {
 
     async fn add_torrent(&self, form: reqwest::multipart::Form) -> Result<(), String> {
         let response = self
-            .http
-            .post(format!("{}/torrents/add", self.url.href))
-            .multipart(form)
-            .timeout(std::time::Duration::from_secs(600))
+            .authorized(
+                self.http
+                    .post(format!("{}/torrents/add", self.url.href))
+                    .multipart(form)
+                    .timeout(std::time::Duration::from_secs(600)),
+            )
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -580,6 +622,23 @@ enum RequestBody {
     Form(String),
     #[allow(dead_code)]
     Multipart(()),
+}
+
+/// Reads a qBittorrent API key out of the URL's userinfo.
+///
+/// The key takes the place of the username, with no password:
+///
+/// ```text
+/// qbittorrent:http://qbt_A1b2C3…@192.168.0.25:8080
+/// ```
+///
+/// qBittorrent mints every key with a `qbt_` prefix, so requiring both that
+/// prefix and an empty password keeps this from ever capturing a real account
+/// whose password merely happens to be missing — that case still goes through
+/// `/auth/login` and fails there with the message it deserves.
+fn api_key_from(credentials: &UrlCredentials) -> Option<String> {
+    (credentials.password.is_empty() && credentials.username.starts_with("qbt_"))
+        .then(|| credentials.username.clone())
 }
 
 fn backoff_ms(attempt: u32) -> u64 {
@@ -1182,6 +1241,29 @@ impl QBittorrent {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn api_key_of(url: &str) -> Option<String> {
+        api_key_from(&extract_credentials_from_url(url, Some("/api/v2")).unwrap())
+    }
+
+    #[test]
+    fn a_bare_qbt_prefixed_userinfo_is_read_as_an_api_key() {
+        assert_eq!(
+            api_key_of("http://qbt_A1b2C3d4E5f6G7h8I9j0K1l2M3n4@localhost:8080").as_deref(),
+            Some("qbt_A1b2C3d4E5f6G7h8I9j0K1l2M3n4")
+        );
+    }
+
+    #[test]
+    fn username_password_pairs_still_use_the_login_flow() {
+        assert_eq!(api_key_of("http://user:pass@localhost:8080"), None);
+        assert_eq!(api_key_of("http://localhost:8080"), None);
+        // A password is present, so this is an account named like a key.
+        assert_eq!(api_key_of("http://qbt_notakey:pass@localhost:8080"), None);
+        // No `qbt_` prefix: a username that was simply left without a password
+        // must still fail at /auth/login rather than be sent as a bearer token.
+        assert_eq!(api_key_of("http://user@localhost:8080"), None);
+    }
 
     fn info(save_path: &str, content_path: &str) -> TorrentInfo {
         TorrentInfo {

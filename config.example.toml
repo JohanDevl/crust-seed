@@ -23,6 +23,9 @@ useClientTorrents = true
 
 # Torrent clients, as "<type>:<url>" or "<type>:readonly:<url>".
 # Types: qbittorrent, rtorrent, transmission, deluge
+# qBittorrent 5.2 and later can also authenticate with an API key
+# (Preferences -> Web UI -> API Key), used in place of the username and with no
+# password: "qbittorrent:http://qbt_yourkeyhere@localhost:8080".
 # torrentClients = [
 #   "qbittorrent:http://username:password@localhost:8080",
 #   "deluge:http://:password@localhost:8112/json",

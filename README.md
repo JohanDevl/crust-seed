@@ -103,7 +103,7 @@ With the API key in an `X-Api-Key` header or an `apikey` query parameter:
 ## Differences from cross-seed
 
 crust-seed aims to do the same things as cross-seed 7.x, and vendors its React
-web UI unchanged. Two things are deliberately different:
+web UI unchanged. Three things are deliberately different:
 
 - **Configuration file format.** cross-seed's `config.js` is executable
   JavaScript that its Node daemon evaluates. crust-seed reads a declarative
@@ -112,6 +112,11 @@ web UI unchanged. Two things are deliberately different:
 - **No in-place upgrade from an existing `cross-seed.db`.** crust-seed creates
   its own database and rebuilds its caches from your client and data
   directories on first run. Search history is not carried over.
+- **qBittorrent API keys.** cross-seed only authenticates with a username and
+  password. crust-seed also accepts the stateless API keys added in qBittorrent
+  5.2 (Preferences → Web UI → API Key), written in place of the username with
+  no password: `qbittorrent:http://qbt_yourkeyhere@localhost:8080`. Password
+  authentication is unchanged.
 
 ## Credits
 
