@@ -29,7 +29,10 @@ const PLACEHOLDER: &str = r#"<!doctype html>
 
 fn main() {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
-    let dist = Path::new(&manifest_dir).join("web").join("webui").join("dist");
+    let dist = Path::new(&manifest_dir)
+        .join("web")
+        .join("webui")
+        .join("dist");
 
     if !dist.join("index.html").exists() {
         fs::create_dir_all(&dist).expect("create web/webui/dist");
@@ -38,7 +41,12 @@ fn main() {
 
     println!("cargo:rerun-if-changed=web/webui/dist");
     println!("cargo:rerun-if-changed=migrations");
-    for var in ["BUILD_COMMIT_SHA", "BUILD_BRANCH", "BUILD_VERSION", "BUILD_DATE"] {
+    for var in [
+        "BUILD_COMMIT_SHA",
+        "BUILD_BRANCH",
+        "BUILD_VERSION",
+        "BUILD_DATE",
+    ] {
         println!("cargo:rerun-if-env-changed={var}");
     }
 }

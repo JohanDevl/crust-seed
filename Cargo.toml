@@ -7,6 +7,10 @@ description = "Fully-automatic cross-seeding with Torznab — a Rust rewrite of 
 license = "Apache-2.0"
 repository = "https://github.com/JohanDevl/crust-seed"
 
+[lib]
+name = "crust_seed"
+path = "src/lib.rs"
+
 [[bin]]
 name = "crust-seed"
 path = "src/main.rs"
