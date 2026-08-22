@@ -17,6 +17,7 @@
 //! the same option names and the same `ms`-style duration strings, so
 //! translating an existing config is mechanical. See `config.example.toml`.
 
+pub mod db_config;
 pub mod duration;
 pub mod file;
 pub mod runtime;
