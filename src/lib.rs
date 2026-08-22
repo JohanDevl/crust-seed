@@ -13,6 +13,7 @@ pub mod data_files;
 pub mod db;
 pub mod decide;
 pub mod errors;
+pub mod health;
 pub mod http;
 pub mod indexers;
 pub mod inject;
