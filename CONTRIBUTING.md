@@ -124,14 +124,20 @@ Releases are cut by pushing to `main`; there is nothing to tag by hand.
 
 1. Bump `version` in `Cargo.toml` on `develop` and commit it. This is the
    single source of truth for the image tag, the git tag and the release.
-2. PR `develop` → `main` and merge it.
+2. PR `develop` → `main` and merge it. The ruleset on `main` requires an
+   approving review from a code owner, and GitHub does not let you approve
+   your own pull request — as the only code owner, merge it with admin
+   rights: `gh pr merge <number> --merge --admin`.
 3. `docker.yml` runs fmt, clippy and the test suite, then builds and pushes
    `ghcr.io/johandevl/crust-seed:vX.Y.Z` and `:latest`, creates the `vX.Y.Z`
    git tag, and opens a GitHub release with generated notes.
-4. Back-merge into `develop` if `main` gained anything:
+4. Back-merge into `develop` if `main` gained anything. `develop` requires a
+   pull request as well, so pushing the merge straight up is rejected
+   (`GH013`):
 
    ```bash
-   git checkout develop && git merge --ff-only origin/main && git push
+   gh pr create --base develop --head main --title "Back-merge main into develop"
+   gh pr merge --merge
    ```
 
 The release step is idempotent: pushing to `main` without bumping
