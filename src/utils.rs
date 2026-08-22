@@ -660,6 +660,44 @@ pub fn join_posix(a: &str, b: &str) -> String {
     format!("/{}", out.join("/"))
 }
 
+/// `getLogString` — how a searchee or a candidate is named in a log line.
+///
+/// The info hash matters more than it looks: a tracker can list the same
+/// release twice under different URLs, and two distinct uploads of one release
+/// often carry the same torrent name. Without the hash, two consecutive
+/// "injected" lines are indistinguishable from one duplicate injection.
+///
+/// The original colours each part with chalk. crust-seed writes plain text to
+/// its log files, so only the structure is reproduced.
+pub fn log_string(
+    title: &str,
+    name: &str,
+    info_hash: Option<&str>,
+    client_host: Option<&str>,
+    path: Option<&str>,
+) -> String {
+    let identity = match (info_hash, client_host) {
+        (None, None) => None,
+        (hash, host) => Some(format!(
+            "{}{}",
+            hash.map(sanitize_info_hash).unwrap_or_default(),
+            host.map(|h| format!("@{h}")).unwrap_or_default()
+        )),
+    };
+    if title == name {
+        return match (identity, path) {
+            (Some(identity), _) => format!("{title} [{identity}]"),
+            (None, Some(path)) => path.to_string(),
+            (None, None) => title.to_string(),
+        };
+    }
+    match (identity, path) {
+        (Some(identity), _) => format!("{title} [{name} [{identity}]]"),
+        (None, Some(path)) => format!("{title} [{path}]"),
+        (None, None) => format!("{title} [{name}]"),
+    }
+}
+
 // ─── Strings ────────────────────────────────────────────────────────────────
 
 pub fn capitalize_first_letter(s: &str) -> String {
@@ -964,6 +1002,51 @@ mod tests {
         assert_eq!(
             get_apikey("https://x.example/api?t=caps&apikey=abc").as_deref(),
             Some("abc")
+        );
+    }
+
+    /// Two uploads of one release share a torrent name, and a tracker can list
+    /// one upload twice. The hash is what tells the resulting log lines apart.
+    #[test]
+    fn log_strings_are_distinguished_by_the_info_hash() {
+        let first = log_string(
+            "A Star Is Born",
+            "A Star Is Born",
+            Some("434ea1e78b809d58c91a82096a515210fe6a3c0c"),
+            None,
+            None,
+        );
+        let second = log_string(
+            "A Star Is Born",
+            "A Star Is Born",
+            Some("f35fc8a16b5ef54d820be0951ea66a5990f6054a"),
+            None,
+            None,
+        );
+        assert_eq!(first, "A Star Is Born [434ea1e7...]");
+        assert_ne!(first, second);
+    }
+
+    #[test]
+    fn log_strings_nest_the_name_when_it_differs_from_the_title() {
+        assert_eq!(
+            log_string(
+                "Show S7",
+                "Season 7",
+                Some("0123456789abcdef"),
+                Some("qb:8080"),
+                None
+            ),
+            "Show S7 [Season 7 [01234567...@qb:8080]]"
+        );
+        // A data searchee has neither hash nor host, so the path stands in.
+        assert_eq!(
+            log_string("Title", "Title", None, None, Some("/data/x")),
+            "/data/x"
+        );
+        assert_eq!(
+            log_string("Title", "Name", None, None, None),
+            "Title [Name]"
         );
     }
 

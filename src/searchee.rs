@@ -123,6 +123,17 @@ impl SearcheeSource {
 }
 
 impl Searchee {
+    /// How this searchee is named in a log line. See [`crate::utils::log_string`].
+    pub fn log_string(&self) -> String {
+        crate::utils::log_string(
+            &self.title,
+            &self.name,
+            self.info_hash.as_deref(),
+            self.client_host.as_deref(),
+            self.path.as_deref(),
+        )
+    }
+
     pub fn source(&self) -> SearcheeSource {
         if self.save_path.is_some() {
             SearcheeSource::Client

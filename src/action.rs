@@ -15,7 +15,7 @@ use crate::config::RuntimeConfig;
 use crate::config::runtime::get_runtime_config;
 use crate::constants::{ALL_EXTENSIONS, Action, ActionResult, Decision, InjectionResult, LinkType};
 use crate::errors::CrustSeedError;
-use crate::searchee::{File, Searchee, get_root, get_root_folder};
+use crate::searchee::{File, Searchee, SearcheeLabel, get_root, get_root_folder};
 use crate::torrent::Metafile;
 use crate::torrent::cache::get_torrent_save_path;
 use crate::utils::{exists, format_as_list, not_exists};
@@ -565,6 +565,66 @@ pub async fn get_save_path(
     Ok(Some(save_path))
 }
 
+/// `logActionResultImpl` — one line per outcome, in the original's shape.
+///
+/// The candidate and the searchee are both named, each with its truncated info
+/// hash, because a tracker can list one release under several URLs and two
+/// separate uploads of a release usually share the same torrent name. Without
+/// the hashes, two "injected" lines in a row read as a duplicate injection.
+///
+/// The `inject` job replays matches it has already reported, so it logs at
+/// verbose; everything else logs at its natural level.
+fn log_action_result(
+    result: ActionResult,
+    new_meta: &Metafile,
+    decision: Decision,
+    searchee: &Searchee,
+    tracker: &str,
+) {
+    let quiet = searchee.label == Some(SearcheeLabel::Inject);
+    let found_by = format!(
+        "Found {} on {tracker} by {} from {} ({})",
+        new_meta.log_string(),
+        decision.as_str(),
+        searchee.source().as_str(),
+        searchee.log_string()
+    );
+
+    match result {
+        ActionResult::Saved => {
+            if quiet {
+                tracing::debug!("{found_by} - saved");
+            } else {
+                tracing::info!("{found_by} - saved");
+            }
+        }
+        ActionResult::Injection(InjectionResult::Success) => {
+            if quiet {
+                tracing::debug!("{found_by} - injected");
+            } else {
+                tracing::info!("{found_by} - injected");
+            }
+        }
+        ActionResult::Injection(InjectionResult::AlreadyExists) => {
+            if quiet {
+                tracing::debug!("{found_by} - exists");
+            } else {
+                tracing::info!("{found_by} - exists");
+            }
+        }
+        ActionResult::Injection(InjectionResult::TorrentNotComplete) => {
+            if quiet {
+                tracing::debug!("{found_by} - source is incomplete, saving...");
+            } else {
+                tracing::warn!("{found_by} - source is incomplete, saving...");
+            }
+        }
+        ActionResult::Injection(InjectionResult::Failure) => {
+            tracing::error!("{found_by} - failed to inject, saving...");
+        }
+    }
+}
+
 /// Injects (or saves) one match.
 pub async fn perform_action(
     new_meta: &Metafile,
@@ -575,8 +635,8 @@ pub async fn perform_action(
     let config = get_runtime_config();
 
     if config.action == Action::Save {
+        log_action_result(ActionResult::Saved, new_meta, decision, searchee, tracker);
         save_to_output_dir(new_meta, tracker, &config).await;
-        tracing::info!("Found {} on {tracker} - saved", new_meta.name);
         return ActionOutcome {
             action_result: ActionResult::Saved,
             client: None,
@@ -607,9 +667,12 @@ pub async fn perform_action(
     if !config.link_dirs.is_empty() {
         match get_save_path(searchee, true).await {
             Err(DownloadDirError::TorrentNotComplete) => {
-                tracing::warn!(
-                    "Found {} on {tracker} - source is incomplete, saving...",
-                    new_meta.name
+                log_action_result(
+                    ActionResult::Injection(InjectionResult::TorrentNotComplete),
+                    new_meta,
+                    decision,
+                    searchee,
+                    tracker,
                 );
                 save_to_output_dir(new_meta, tracker, &config).await;
                 return ActionOutcome {
@@ -751,7 +814,13 @@ pub async fn perform_action(
 
     match injection {
         InjectionResult::Success => {
-            tracing::info!("Found {} on {tracker} - injected", new_meta.name);
+            log_action_result(
+                ActionResult::Injection(InjectionResult::Success),
+                new_meta,
+                decision,
+                searchee,
+                tracker,
+            );
             // The inject job may still need the file: a rechecking torrent, or
             // a data-based searchee whose match is not yet confirmed.
             if should_recheck(new_meta, decision, &config) || searchee.info_hash.is_none() {
@@ -759,7 +828,13 @@ pub async fn perform_action(
             }
         }
         InjectionResult::AlreadyExists => {
-            tracing::info!("Found {} on {tracker} - exists", new_meta.name);
+            log_action_result(
+                ActionResult::Injection(InjectionResult::AlreadyExists),
+                new_meta,
+                decision,
+                searchee,
+                tracker,
+            );
             if linked_new_files {
                 tracing::info!(
                     "Rechecking {} as new files were linked from {}",
@@ -770,7 +845,16 @@ pub async fn perform_action(
                 client.resume_injection(new_meta, decision, false).await;
             }
         }
+        // Failure. The original reports this as an error; leaving it silent
+        // meant a failed injection produced no log line at all.
         _ => {
+            log_action_result(
+                ActionResult::Injection(injection),
+                new_meta,
+                decision,
+                searchee,
+                tracker,
+            );
             save_to_output_dir(new_meta, tracker, &config).await;
             if unlink_ok && let Some(destination) = &destination_dir {
                 unlink_metafile(new_meta, destination).await;

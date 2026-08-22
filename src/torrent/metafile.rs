@@ -93,6 +93,13 @@ pub fn locale_compare(a: &str, b: &str) -> std::cmp::Ordering {
 }
 
 impl Metafile {
+    /// How this torrent is named in a log line. A candidate has no client host
+    /// and no path, so this is always `title` plus the truncated info hash.
+    /// See [`crate::utils::log_string`].
+    pub fn log_string(&self) -> String {
+        crate::utils::log_string(&self.title, &self.name, Some(&self.info_hash), None, None)
+    }
+
     pub fn decode(buf: &[u8]) -> Result<Metafile, MetafileError> {
         let (raw, info_span) = bencode::decode_root(buf)?;
         let info = raw.get("info").ok_or(MetafileError::MissingField("info"))?;
