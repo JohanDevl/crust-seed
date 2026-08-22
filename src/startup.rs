@@ -250,6 +250,35 @@ mod tests {
         unsafe { std::env::remove_var("CONFIG_DIR") };
     }
 
+    /// Migrating from cross-seed means keeping its API key, or every webhook
+    /// already configured in qBittorrent, autobrr and the *arrs stops working
+    /// with no indication of why.
+    #[tokio::test]
+    async fn an_imported_api_key_survives_the_migration() {
+        // CONFIG_DIR is process-global; serialise the tests that set it.
+        let _guard = crate::config::runtime::config_test_guard_async().await;
+        let dir = tempfile::tempdir().unwrap();
+        unsafe { std::env::set_var("CONFIG_DIR", dir.path()) };
+        let api_key = "98b1000000000000000000000000000000000000000000ff";
+        tokio::fs::write(
+            dir.path().join("config.toml"),
+            format!("apiKey = \"{api_key}\"\n"),
+        )
+        .await
+        .unwrap();
+
+        let pool = test_pool().await;
+        determine_runtime_config(&pool, &ConfigOverrides::new())
+            .await
+            .unwrap();
+        assert_eq!(
+            crate::user_auth::get_api_key(&pool).await.unwrap(),
+            api_key,
+            "the configured key must be the one the API accepts"
+        );
+        unsafe { std::env::remove_var("CONFIG_DIR") };
+    }
+
     /// A malformed config must fail loudly rather than silently starting with
     /// settings the user never chose.
     #[tokio::test]
