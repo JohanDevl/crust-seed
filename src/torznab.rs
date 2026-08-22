@@ -214,13 +214,17 @@ fn parse_xml(input: &str) -> Result<Element, String> {
             }
             Ok(Event::Text(e)) => {
                 if let Some((_, element)) = stack.last_mut() {
-                    // Event::Text is still escaped in quick-xml; entities have
-                    // to be resolved explicitly.
-                    let raw = e.xml10_content().unwrap_or_default();
-                    let text = quick_xml::escape::unescape(&raw)
-                        .map(|c| c.into_owned())
-                        .unwrap_or_else(|_| raw.into_owned());
-                    element.text.push_str(&text);
+                    element
+                        .text
+                        .push_str(&e.xml10_content().unwrap_or_default());
+                }
+            }
+            // quick-xml reports `&…;` separately from the text around it, so
+            // references have to be stitched back in here or they vanish.
+            // See `crate::xml`.
+            Ok(Event::GeneralRef(e)) => {
+                if let Some((_, element)) = stack.last_mut() {
+                    element.text.push_str(&crate::xml::resolve_reference(&e));
                 }
             }
             Ok(Event::CData(e)) => {
@@ -828,7 +832,12 @@ pub async fn update_caps(pool: &SqlitePool) -> sqlx::Result<()> {
             .map(|indexer| update_caps_for_indexer(pool, indexer)),
     )
     .await;
-    for indexer in &indexers {
+    // Deliberate divergence: `updateCaps` logs the indexers it read *before*
+    // the refresh, so on a fresh install — where every `categories` is still
+    // null — it reports "failed to fetch caps" for every indexer even though
+    // all of them succeeded. Re-reading makes the log describe what was just
+    // stored.
+    for indexer in &crate::indexers::get_all_indexers(pool).await? {
         log_indexer_media_types(indexer);
     }
     Ok(())
@@ -1006,6 +1015,41 @@ mod tests {
         );
         // No indexer element at all -> the sentinel tracker name.
         assert_eq!(candidates[1].tracker, UNKNOWN_TRACKER);
+    }
+
+    /// Prowlarr and Jackett build download links as
+    /// `?apikey=…&link=…&file=…`, which reaches the parser XML-escaped. Dropping
+    /// the `&amp;` entities collapses the three parameters into one bogus
+    /// `apikey`, and every snatch then fails with `401 Unauthorized`.
+    #[test]
+    fn entity_references_survive_in_text() {
+        let xml = r#"<rss><channel><item>
+          <title>Tom &amp; Jerry S01E01 &#8211; Pilot</title>
+          <guid>https://tracker.example/details/1</guid>
+          <link>http://prowlarr.example/26/download?apikey=KEY&amp;link=TOKEN&amp;file=Tom+%26+Jerry</link>
+          <size>1</size>
+        </item></channel></rss>"#;
+        let candidates = parse_torznab_results(xml, 1).unwrap();
+        assert_eq!(
+            candidates[0].link,
+            "http://prowlarr.example/26/download?apikey=KEY&link=TOKEN&file=Tom+%26+Jerry"
+        );
+        assert_eq!(candidates[0].name, "Tom & Jerry S01E01 – Pilot");
+    }
+
+    /// Attributes take a different quick-xml path than text, so the category
+    /// names a French tracker exposes as `Films &amp; Vid&#233;os` need their
+    /// own guard.
+    #[test]
+    fn entity_references_survive_in_attributes() {
+        let xml = r#"<caps><categories><category id="2000" name="Films &amp; Vid&#233;os"/></categories></caps>"#;
+        let root = parse_xml(xml).unwrap();
+        let category = root
+            .child("caps")
+            .and_then(|c| c.child("categories"))
+            .and_then(|c| c.child("category"))
+            .unwrap();
+        assert_eq!(category.attr("name"), Some("Films & Vidéos"));
     }
 
     #[test]

@@ -196,11 +196,13 @@ pub fn parse_response(xml: &str) -> Result<XmlRpcResponse, String> {
                 text.clear();
             }
             Ok(Event::Text(e)) => {
-                let raw = e.xml10_content().unwrap_or_default();
-                let decoded = quick_xml::escape::unescape(&raw)
-                    .map(|c| c.into_owned())
-                    .unwrap_or_else(|_| raw.into_owned());
-                text.push_str(&decoded);
+                text.push_str(&e.xml10_content().unwrap_or_default());
+            }
+            // quick-xml reports `&…;` separately from the text around it, so
+            // references have to be stitched back in here or they vanish.
+            // See `crate::xml`.
+            Ok(Event::GeneralRef(e)) => {
+                text.push_str(&crate::xml::resolve_reference(&e));
             }
             Ok(Event::CData(e)) => {
                 text.push_str(&String::from_utf8_lossy(e.into_inner().as_ref()));

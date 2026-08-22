@@ -34,3 +34,4 @@ pub mod torrent;
 pub mod torznab;
 pub mod user_auth;
 pub mod utils;
+pub mod xml;
