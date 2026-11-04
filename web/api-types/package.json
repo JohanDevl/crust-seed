@@ -20,6 +20,6 @@
 	"dependencies": {
 		"@crust-seed/shared": "file:../shared",
 		"@trpc/server": "^11.13.4",
-		"zod": "^4.3.6"
+		"zod": "^4.6.7"
 	}
 }
